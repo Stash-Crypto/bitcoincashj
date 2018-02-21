@@ -39,7 +39,7 @@ import java.util.concurrent.ExecutionException;
 public class DownloadProgressTracker extends AbstractPeerDataEventListener {
     private static final Logger log = LoggerFactory.getLogger(DownloadProgressTracker.class);
     private int originalBlocksLeft = -1;
-    private int lastPercent = 0;
+    private double lastPercent = 0;
     private SettableFuture<Long> future = SettableFuture.create();
     private boolean caughtUp = false;
 
@@ -74,9 +74,11 @@ public class DownloadProgressTracker extends AbstractPeerDataEventListener {
             return;
 
         double pct = 100.0 - (100.0 * (blocksLeft / (double) originalBlocksLeft));
-        if ((int) pct != lastPercent) {
+
+
+        if ((int) (pct*100) != (int)(lastPercent*100)) {
             progress(pct, blocksLeft, new Date(block.getTimeSeconds() * 1000));
-            lastPercent = (int) pct;
+            lastPercent = pct;
         }
     }
 

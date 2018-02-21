@@ -74,6 +74,7 @@ import java.security.NoSuchProviderException;
 import java.security.spec.InvalidKeySpecException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -576,8 +577,8 @@ public class Wallet {
         return mBlockchainDownloadProgressTracker != null && mBlockchainDownloadProgressTracker.isDownloading();
     }
 
-    public int getBlockchainProgress() {
-        return mBlockchainDownloadProgressTracker != null ? mBlockchainDownloadProgressTracker.getProgress() : -1;
+    public double getBlockchainProgress() {
+        return mBlockchainDownloadProgressTracker != null ? mBlockchainDownloadProgressTracker.getProgress() : -1d;
     }
 
     public boolean isTransactionEntirelySelf(Transaction tx) {
@@ -786,5 +787,13 @@ public class Wallet {
     static class FeeCalculation {
         CoinSelection bestCoinSelection;
         TransactionOutput bestChangeOutput;
+    }
+
+    public int getLastBlockSeenHeight(){
+        return this.vWallet.getLastBlockSeenHeight();
+    }
+
+    public Date getLastBlockSeenTime(){
+        return this.vWallet.getLastBlockSeenTime();
     }
 }

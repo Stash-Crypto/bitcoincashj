@@ -29,5 +29,5 @@ public abstract class BlockchainDownloadProgressTracker extends DownloadProgress
         return isDownloading;
     }
 
-    public abstract int getProgress();
+    public abstract double getProgress();
 }
