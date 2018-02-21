@@ -14,8 +14,3 @@ script:
 after_success:
   - cd ../core
   - mvn jacoco:report coveralls:report
-
-notifications:
-  irc:
-    channels: "irc.freenode.net#bitcoinj"
-    skip_join: true

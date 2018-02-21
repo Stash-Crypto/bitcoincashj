@@ -14,6 +14,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.bitcoinj.core.listeners.OnTransactionBroadcastListener;
 import org.bitcoinj.wallet.bip47.BIP47Util;
 import org.bitcoinj.wallet.bip47.Bip47Address;
 import org.bitcoinj.wallet.bip47.Bip47Meta;
@@ -219,6 +220,28 @@ public class Wallet {
             vChain = new BlockChain(blockchain.getNetworkParameters(), vStore);
             vPeerGroup = new PeerGroup(blockchain.getNetworkParameters(), vChain);
 
+            // Fixes a bug created by a race condition between a filteredBlock and a notification transaction
+            // (transaction dependencies are asynchronous (See issue 1029))
+            // By rolling the blockstore one block, we will be sure that the generated keys were imported to the wallet.
+            vPeerGroup.addOnTransactionBroadcastListener(new OnTransactionBroadcastListener() {
+                @Override
+                public void onTransaction(Peer peer, Transaction t) {
+                    if (isNotificationTransaction(t) && peer.getCurrentFilteredBlock() != null){
+
+                        if (vWallet.getTransaction(t.getHash()) != null) {
+                            log.debug("Already seen this notification transaction. ");
+                            return;
+                        }
+                        log.debug("Valid notification transaction found. Replaying a block back .. ");
+                        try {
+                            vChain.rollbackBlockStore(vWallet.getLastBlockSeenHeight() - 1);
+                        } catch(BlockStoreException e){
+                            log.error("Could not rollback ... " );
+                        }
+                    }
+                }
+            });
+
             if (blockchain.getCoin().equals("BCH")) {
                 vPeerGroup.addAddress(new PeerAddress(InetAddresses.forString("158.69.119.35"), 8333));
                 vPeerGroup.addAddress(new PeerAddress(InetAddresses.forString("144.217.73.86"), 8333));
@@ -227,6 +250,7 @@ public class Wallet {
                 vPeerGroup.addAddress(new PeerAddress(InetAddresses.forString("144.217.73.86"), 18333));
             }
 
+            vPeerGroup.setUseLocalhostPeerWhenPossible(true);
             vPeerGroup.addPeerDiscovery(new DnsDiscovery(blockchain.getNetworkParameters()));
 
             vChain.addWallet(vWallet);

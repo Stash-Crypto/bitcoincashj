@@ -781,15 +781,10 @@ public class Peer extends PeerSocketHandler {
             if (maybeHandleRequestedData(tx)) {
                 return;
             }
-            if (currentFilteredBlock != null) {
-                if (!currentFilteredBlock.provideTransaction(tx)) {
-                    // Got a tx that didn't fit into the filtered block, so we must have received everything.
-                    endFilteredBlock(currentFilteredBlock);
-                    currentFilteredBlock = null;
-                }
-                // Don't tell wallets or listeners about this tx as they'll learn about it when the filtered block is
-                // fully downloaded instead.
-                return;
+            if (currentFilteredBlock != null && !currentFilteredBlock.provideTransaction(tx)) {
+                // Got a tx that didn't fit into the filtered block, so we must have received everything.
+                endFilteredBlock(currentFilteredBlock);
+                currentFilteredBlock = null;
             }
             // It's a broadcast transaction. Tell all wallets about this tx so they can check if it's relevant or not.
             for (final Wallet wallet : wallets) {
@@ -1854,5 +1849,13 @@ public class Peer extends PeerSocketHandler {
      */
     public void setDownloadTxDependencies(int depth) {
         vDownloadTxDependencyDepth = depth;
+    }
+
+    /**
+     * Returns a {@link FilteredBlock} when this Peer has received a block and is currently processing
+     * or waiting for relevant transactions.
+     */
+    public FilteredBlock getCurrentFilteredBlock() {
+        return this.currentFilteredBlock;
     }
 }
