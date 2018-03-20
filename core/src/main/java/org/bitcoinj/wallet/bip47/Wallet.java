@@ -837,4 +837,8 @@ public class Wallet {
     public org.bitcoinj.wallet.Wallet getvWallet(){
         return vWallet;
     }
+
+    public BlockStore getBlockStore() {
+        return vStore;
+    }
 }
