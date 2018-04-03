@@ -103,23 +103,23 @@ public class Transaction extends ChildMessage {
     /**
      * If feePerKb is lower than this, Bitcoin Core will treat it as if there were no fee.
      */
-    public static final Coin REFERENCE_DEFAULT_MIN_TX_FEE = Coin.valueOf(50); // 0.05 mBTC
-    public static final Coin BCC_REFERENCE_DEFAULT_MIN_TX_FEE = Coin.valueOf(0); // 0.004 mBTC
+    public static final Coin REFERENCE_DEFAULT_MIN_TX_FEE = Coin.valueOf(1000); // 0.01 mBTC, 1000 satoshis / Kb, 1 satoshi / byte
+    public static final Coin BCC_REFERENCE_DEFAULT_MIN_TX_FEE = Coin.valueOf(100); // 0.001 mBCH, 100 satoshis / 1000 bytes (1 satoshi per 10 bytes)
 
     /**
      * If using this feePerKb, transactions will get confirmed within the next couple of blocks.
-     * This should be adjusted from time to time. Last adjustment: February 2017.
+     * This should be adjusted from time to time. Last adjustment: March 2018.
      */
-    public static final Coin DEFAULT_TX_FEE = Coin.valueOf(1000); // 1 mBTC
-    public static final Coin BCC_DEFAULT_TX_FEE = Coin.valueOf(1); // 0.02 mBTC / Kb
+    public static final Coin DEFAULT_TX_FEE = Coin.valueOf(100000); // 100,000 satoshis or 1 mBTC
+    public static final Coin BCC_DEFAULT_TX_FEE = Coin.valueOf(1000); // 1000 satoshis or 0.01 mBCH, (1 satoshi per byte)
 
     /**
      * Any standard (ie pay-to-address) output smaller than this value (in satoshis) will most likely be rejected by the network.
      * This is calculated by assuming a standard output will be 34 bytes, and then using the formula used in
      * {@link TransactionOutput#getMinNonDustValue(Coin)}.
      */
-    public static final Coin MIN_NONDUST_OUTPUT = Coin.valueOf(27); // satoshis
-    public static final Coin BCC_MIN_NONDUST_OUTPUT = Coin.valueOf(0); // satoshis
+    public static final Coin MIN_NONDUST_OUTPUT = Coin.valueOf(546); // satoshis
+    public static final Coin BCC_MIN_NONDUST_OUTPUT = Coin.valueOf(546); // satoshis
 
     public static final int CURRENT_VERSION = 2;
     public static final int MAX_STANDARD_VERSION = 2;
