@@ -211,7 +211,7 @@ public class Wallet {
             //vPeerGroup.addAddress(new PeerAddress(InetAddresses.forString("47.74.186.127"), 18333));
         }
 
-        vPeerGroup.setUseLocalhostPeerWhenPossible(false);
+        vPeerGroup.setUseLocalhostPeerWhenPossible(true);
         vPeerGroup.addPeerDiscovery(new DnsDiscovery(blockchain.getNetworkParameters()));
 
         vPeerGroup.addWallet(vWallet);
@@ -752,11 +752,18 @@ public class Wallet {
         return createSend(address, amount);
     }
 
+    private static Coin getDefaultFee(NetworkParameters params){
+        if (params.getUseForkId()) {
+            return Transaction.DEFAULT_TX_FEE;
+        } else {
+            return Transaction.BCC_DEFAULT_TX_FEE;
+        }
+    }
     public Transaction createSend(Address address, long amount) throws InsufficientMoneyException {
         SendRequest sendRequest = SendRequest.to(address, Coin.valueOf(amount));
-        if (!getNetworkParameters().getUseForkId()) {
-            sendRequest.feePerKb = Coin.valueOf(141000);
-        }
+
+        sendRequest.feePerKb = getDefaultFee(getNetworkParameters());
+
         vWallet.completeTx(sendRequest);
         return sendRequest.tx;
     }
@@ -773,9 +780,7 @@ public class Wallet {
 
         SendRequest sendRequest = SendRequest.to(ntAddress, ntValue);
 
-        if (!getNetworkParameters().getUseForkId()) {
-            sendRequest.feePerKb = Coin.valueOf(141000);
-        }
+        sendRequest.feePerKb = getDefaultFee(getNetworkParameters());
 
         sendRequest.memo = "notification_transaction";
 
