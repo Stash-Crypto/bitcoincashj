@@ -13,15 +13,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
-import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.bitcoinj.core.listeners.OnTransactionBroadcastListener;
-import org.bitcoinj.core.listeners.TransactionConfidenceEventListener;
-import org.bitcoinj.wallet.bip47.BIP47Util;
-import org.bitcoinj.wallet.bip47.Bip47Address;
-import org.bitcoinj.wallet.bip47.Bip47Meta;
-import org.bitcoinj.wallet.bip47.NotSecp256k1Exception;
-import org.bitcoinj.wallet.bip47.PaymentCode;
-import org.bitcoinj.wallet.bip47.SecretPoint;
+import org.bitcoinj.net.BlockingClientManager;
 import org.bitcoinj.wallet.bip47.listeners.BlockchainDownloadProgressTracker;
 import org.bitcoinj.wallet.bip47.listeners.TransactionEventListener;
 import org.bitcoinj.crypto.bip47.Account;
@@ -79,10 +71,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
-
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
 
 /**
  * Created by jimmy on 9/28/17.
@@ -115,13 +104,20 @@ public class Wallet {
     private ConcurrentHashMap<String, Bip47Meta> bip47MetaData = new ConcurrentHashMap<>();
     private static final Logger log = LoggerFactory.getLogger(Wallet.class);
 
+    private int torSocksPort = -1;
+
     public Wallet(Blockchain blockchain, File walletDirectory, @Nullable StashDeterministicSeed deterministicSeed) throws Exception {
+        this(blockchain, walletDirectory, deterministicSeed, -1);
+    }
+
+    public Wallet(Blockchain blockchain, File walletDirectory, @Nullable StashDeterministicSeed deterministicSeed, int torSocksPort) throws Exception {
         this.blockchain = blockchain;
 
         this.directory = new File(walletDirectory, blockchain.getCoin());
 
         this.restoreFromSeed = deterministicSeed;
 
+        this.torSocksPort = torSocksPort;
         if (!directory.exists()) {
             if (!directory.mkdirs()) {
                 throw new IOException("Could not create directory " + directory.getAbsolutePath());
@@ -178,10 +174,21 @@ public class Wallet {
         addBip47Listener();
     }
 
-    private void derivePeerGroup(){
+    private void derivePeerGroup() {
+
+        if (torSocksPort>0) {
+            System.setProperty("socksProxyHost", "127.0.0.1");
+            System.setProperty("socksProxyPort", ((Integer)torSocksPort).toString());
+        }
+
         Context.propagate(new Context(blockchain.getNetworkParameters()));
-        if (vPeerGroup == null)
-            vPeerGroup = new PeerGroup(blockchain.getNetworkParameters(), vChain);
+
+        if (vPeerGroup == null) {
+            if (torSocksPort > 0)
+                vPeerGroup = new PeerGroup(blockchain.getNetworkParameters(), vChain, new BlockingClientManager());
+            else
+                vPeerGroup = new PeerGroup(blockchain.getNetworkParameters(), vChain);
+        }
 
         if (blockchain.getCoin().equals("BCH")) {
             // stash crypto
@@ -330,6 +337,7 @@ public class Wallet {
         return vPeerGroup.getConnectedPeers();
     }
 
+    // throws TimeoutException only if tor is enabled
     public void stop() {
         if (!isStarted()) {
             return;
