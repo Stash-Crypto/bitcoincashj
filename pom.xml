@@ -4,7 +4,7 @@
 
   <groupId>org.bitcoincashj</groupId>
   <artifactId>bitcoincashj-parent</artifactId>
-  <version>0.14.7-bip47.1</version>
+  <version>0.14.5-bip47.2</version>
   <packaging>pom</packaging>
 
   <modules>
@@ -20,14 +20,14 @@
   </parent>
 
   <scm>
-    <connection>scm:git:https://github.com/bitcoincash-wallet/bitcoincashj</connection>
-    <developerConnection>scm:git:https://github.com/bitcoincash-wallet/bitcoincashj</developerConnection>
-    <url>scm:git:https://github.com/bitcoinj/bitcoincashj</url>
+    <connection>scm:git:https://github.com/Stash-Crypto/bitcoincashj</connection>
+    <developerConnection>scm:git:https://github.com/Stash-Crypto/bitcoincashj</developerConnection>
+    <url>scm:git:https://github.com/Stash-Crypto/bitcoincashj</url>
   </scm>
 
   <name>bitcoincashj Parent</name>
   <description>Provides the common configuration for the BitCoinJ modules</description>
-  <url>http://www.bitcoinj.org/</url>
+  <url>http://bitcoinj.cash/</url>
 
   <licenses>
     <license>
@@ -40,13 +40,13 @@
 
   <issueManagement>
     <system>GitHub</system>
-    <url>https://github.com/bitcoinj/bitcoincashj/issues</url>
+    <url>https://github.com/Stash-Crypto/bitcoincashj/issues</url>
   </issueManagement>
 
   <mailingLists>
     <mailingList>
-      <name>bitcoinj Google Group</name>
-      <post>https://groups.google.com/forum/#!forum/bitcoinj</post>
+      <name>bitcoinj.cash Google Group</name>
+      <post>https://groups.google.com/forum/#!forum/bitcoinj-cash</post>
     </mailingList>
   </mailingLists>
 

@@ -32,7 +32,7 @@ public class UnitTestParams extends AbstractBitcoinNetParams {
     public UnitTestParams() {
         super();
         id = ID_UNITTESTNET;
-        packetMagic = 0x0b110907;
+        packetMagic = 0xf4e5f3f4L;      // must be same as testnet3
         addressHeader = 111;
         p2shHeader = 196;
         acceptableAddressCodes = new int[] { addressHeader, p2shHeader };
@@ -54,6 +54,10 @@ public class UnitTestParams extends AbstractBitcoinNetParams {
         majorityEnforceBlockUpgrade = 3;
         majorityRejectBlockOutdated = 4;
         majorityWindow = 7;
+
+        // support for legacy tests - dont test BCH 2017-11-13 hardfork by default
+        cashHardForkActivationTime = (System.currentTimeMillis()/1000)+24*60*60;
+        daaHeight = 1000000;
     }
 
     private static UnitTestParams instance;

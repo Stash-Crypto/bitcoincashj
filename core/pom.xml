@@ -22,7 +22,7 @@
     <parent>
         <groupId>org.bitcoincashj</groupId>
         <artifactId>bitcoincashj-parent</artifactId>
-        <version>0.14.7-bip47.1</version>
+        <version>0.14.5-bip47.2</version>
     </parent>
 
     <artifactId>bitcoincashj-core</artifactId>
@@ -32,7 +32,7 @@
 
     <packaging>jar</packaging>
 
-    <url>https://bitcoinj.github.io</url>
+    <url>https://bitcoinj.cash</url>
 
     <licenses>
         <license>
@@ -45,8 +45,8 @@
     <!-- Dummy block to make Maven Central happy: authors list is in AUTHORS -->
     <developers>
         <developer>
-            <name>The bitcoinj team</name>
-            <email>bitcoinj@googlegroups.com</email>
+            <name>The bitcoinj.cash team</name>
+            <email>bitcoinj-cash@googlegroups.com</email>
         </developer>
     </developers>
 
@@ -321,10 +321,7 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
-                    <!-- First argument increases the maximum heap size, second argument disables a nasty HotSpot optimization
-                         (see http://jawspeak.com/2010/05/26/hotspot-caused-exceptions-to-lose-their-stack-traces-in-production-and-the-fix/)
-                         and last argument is required for code coverage to work. -->
-                    <argLine>-Xmx1024m -XX:-OmitStackTraceInFastThrow ${surefireArgLine}</argLine>
+                    <argLine>-Xmx2048m ${surefireArgLine}</argLine><!-- Last argument is required for code coverage to work. -->
                     <runOrder>alphabetical</runOrder>
                     <systemProperties>
                         <property>

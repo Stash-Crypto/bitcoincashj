@@ -26,7 +26,7 @@ import static com.google.common.base.Preconditions.checkState;
  * Network parameters for the regression test mode of bitcoind in which all blocks are trivially solvable.
  */
 public class RegTestParams extends TestNet2Params {
-    private static final BigInteger MAX_TARGET = new BigInteger("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", 16);
+    private static final BigInteger MAX_TARGET = new BigInteger("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", 16);
 
     public RegTestParams() {
         super();
@@ -41,6 +41,11 @@ public class RegTestParams extends TestNet2Params {
         majorityEnforceBlockUpgrade = MainNetParams.MAINNET_MAJORITY_ENFORCE_BLOCK_UPGRADE;
         majorityRejectBlockOutdated = MainNetParams.MAINNET_MAJORITY_REJECT_BLOCK_OUTDATED;
         majorityWindow = MainNetParams.MAINNET_MAJORITY_WINDOW;
+
+        // Hard fork is always enabled on regtest.
+        uahfHeight = 0;
+        // Nov, 13 hard fork is always on on regtest.
+        cashHardForkActivationTime = 0;
     }
 
     @Override

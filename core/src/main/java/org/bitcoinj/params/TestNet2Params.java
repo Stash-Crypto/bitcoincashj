@@ -24,6 +24,8 @@ import static com.google.common.base.Preconditions.checkState;
 /**
  * Parameters for the old version 2 testnet. This is not useful to you - it exists only because some unit tests are
  * based on it.
+ *
+ *
  */
 public class TestNet2Params extends AbstractBitcoinNetParams {
     public static final int TESTNET_MAJORITY_WINDOW = 100;
@@ -33,7 +35,7 @@ public class TestNet2Params extends AbstractBitcoinNetParams {
     public TestNet2Params() {
         super();
         id = ID_TESTNET;
-        packetMagic = 0xfabfb5daL;
+        packetMagic = 0xdab5bffaL;
         port = 18333;
         addressHeader = 111;
         p2shHeader = 196;
@@ -57,6 +59,10 @@ public class TestNet2Params extends AbstractBitcoinNetParams {
         majorityEnforceBlockUpgrade = TESTNET_MAJORITY_ENFORCE_BLOCK_UPGRADE;
         majorityRejectBlockOutdated = TESTNET_MAJORITY_REJECT_BLOCK_OUTDATED;
         majorityWindow = TESTNET_MAJORITY_WINDOW;
+
+        /** Activation time at which the cash HF kicks in. */
+        cashHardForkActivationTime = 1510600000;
+        daaHeight = 1188697;
     }
 
     private static TestNet2Params instance;
