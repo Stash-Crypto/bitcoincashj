@@ -21,6 +21,7 @@ import com.google.common.collect.Multimap;
 import com.google.common.collect.MultimapBuilder;
 import org.bitcoinj.core.*;
 import org.bitcoinj.crypto.TransactionSignature;
+import org.bitcoinj.protocols.channels.IPaymentChannelClient.ClientChannelProperties;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptBuilder;
 import org.bitcoinj.wallet.AllowUnconfirmedCoinSelector;
@@ -99,7 +100,7 @@ public class PaymentChannelV2ClientState extends PaymentChannelClientState {
     }
 
     @Override
-    public synchronized void initiate(@Nullable KeyParameter userKey) throws ValueOutOfRangeException, InsufficientMoneyException {
+    public synchronized void initiate(@Nullable KeyParameter userKey, ClientChannelProperties clientChannelProperties) throws ValueOutOfRangeException, InsufficientMoneyException {
         final NetworkParameters params = wallet.getParams();
         Transaction template = new Transaction(params);
         // There is also probably a change output, but we don't bother shuffling them as it's obvious from the
@@ -113,9 +114,9 @@ public class PaymentChannelV2ClientState extends PaymentChannelClientState {
             throw new ValueOutOfRangeException("totalValue too small to use");
         SendRequest req = SendRequest.forTx(template);
         req.coinSelector = AllowUnconfirmedCoinSelector.get();
-        editContractSendRequest(req);
         req.shuffleOutputs = false;   // TODO: Fix things so shuffling is usable.
-        req.aesKey = userKey;
+        req = clientChannelProperties.modifyContractSendRequest(req);
+        if (userKey != null) req.aesKey = userKey;
         wallet.completeTx(req);
         Coin multisigFee = req.tx.getFee();
         contract = req.tx;
@@ -133,10 +134,10 @@ public class PaymentChannelV2ClientState extends PaymentChannelClientState {
             final Coin valueAfterFee = totalValue.subtract(params.getReferenceDefaultMinTxFee());
             if (params.getMinNonDustOutput().compareTo(valueAfterFee) > 0)
                 throw new ValueOutOfRangeException("totalValue too small to use");
-            refundTx.addOutput(valueAfterFee, myKey.toAddress(params));
-            refundFees = multisigFee.add(params.getReferenceDefaultMinTxFee());
+            refundTx.addOutput(valueAfterFee, LegacyAddress.fromKey(params, myKey));
+	    refundFees = multisigFee.add(params.getReferenceDefaultMinTxFee());
         } else {
-            refundTx.addOutput(totalValue, myKey.toAddress(params));
+            refundTx.addOutput(totalValue, LegacyAddress.fromKey(params, myKey));
             refundFees = multisigFee;
         }
 

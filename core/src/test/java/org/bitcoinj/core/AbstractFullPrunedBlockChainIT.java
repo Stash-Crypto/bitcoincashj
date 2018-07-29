@@ -57,6 +57,8 @@ public abstract class AbstractFullPrunedBlockChainIT {
             return 10000;
         }
     };
+    private static final NetworkParameters MAINNET = MainNetParams.get();
+
     protected FullPrunedBlockChain chain;
     protected FullPrunedBlockStore store;
 
@@ -193,12 +195,12 @@ public abstract class AbstractFullPrunedBlockChainIT {
         rollingBlock.solve();
         
         chain.add(rollingBlock);
-        WeakReference<StoredUndoableBlock> undoBlock = new WeakReference<StoredUndoableBlock>(store.getUndoBlock(rollingBlock.getHash()));
+        WeakReference<StoredUndoableBlock> undoBlock = new WeakReference<>(store.getUndoBlock(rollingBlock.getHash()));
 
         StoredUndoableBlock storedUndoableBlock = undoBlock.get();
         assertNotNull(storedUndoableBlock);
         assertNull(storedUndoableBlock.getTransactions());
-        WeakReference<TransactionOutputChanges> changes = new WeakReference<TransactionOutputChanges>(storedUndoableBlock.getTxOutChanges());
+        WeakReference<TransactionOutputChanges> changes = new WeakReference<>(storedUndoableBlock.getTxOutChanges());
         assertNotNull(changes.get());
         storedUndoableBlock = null;   // Blank the reference so it can be GCd.
         
@@ -219,12 +221,11 @@ public abstract class AbstractFullPrunedBlockChainIT {
     
     @Test
     public void testFirst100KBlocks() throws Exception {
-        NetworkParameters params = MainNetParams.get();
-        Context context = new Context(params);
+        Context context = new Context(MAINNET);
         File blockFile = new File(getClass().getResource("first-100k-blocks.dat").getFile());
-        BlockFileLoader loader = new BlockFileLoader(params, Arrays.asList(blockFile));
+        BlockFileLoader loader = new BlockFileLoader(MAINNET, Arrays.asList(blockFile));
         
-        store = createStore(params, 10);
+        store = createStore(MAINNET, 10);
         resetStore(store);
         chain = new FullPrunedBlockChain(context, store);
         for (Block block : loader)
@@ -260,7 +261,7 @@ public abstract class AbstractFullPrunedBlockChainIT {
         // Create bitcoin spend of 1 BTC.
         ECKey toKey = new ECKey();
         Coin amount = Coin.valueOf(100000000);
-        Address address = new Address(PARAMS, toKey.getPubKeyHash());
+        Address address = LegacyAddress.fromKey(PARAMS, toKey);
         Coin totalAmount = Coin.ZERO;
 
         Transaction t = new Transaction(PARAMS);
@@ -271,7 +272,7 @@ public abstract class AbstractFullPrunedBlockChainIT {
         chain.add(rollingBlock);
         totalAmount = totalAmount.add(amount);
 
-        List<UTXO> outputs = store.getOpenTransactionOutputs(Lists.newArrayList(address));
+        List<UTXO> outputs = store.getOpenTransactionOutputs(Lists.newArrayList(toKey));
         assertNotNull(outputs);
         assertEquals("Wrong Number of Outputs", 1, outputs.size());
         UTXO output = outputs.get(0);
@@ -327,7 +328,7 @@ public abstract class AbstractFullPrunedBlockChainIT {
         // Create another spend of 1/2 the value of BTC we have available using the wallet (store coin selector).
         ECKey toKey2 = new ECKey();
         Coin amount2 = amount.divide(2);
-        Address address2 = new Address(PARAMS, toKey2.getPubKeyHash());
+        Address address2 = LegacyAddress.fromKey(PARAMS, toKey2);
         SendRequest req = SendRequest.to(address2, amount2);
         wallet.completeTx(req);
         wallet.commitTx(req.tx);

@@ -6,7 +6,13 @@ package org.bitcoinj.protocols.channels;
 public final class ServerState {
   private ServerState() {}
   public static void registerAllExtensions(
+      com.google.protobuf.ExtensionRegistryLite registry) {
+  }
+
+  public static void registerAllExtensions(
       com.google.protobuf.ExtensionRegistry registry) {
+    registerAllExtensions(
+        (com.google.protobuf.ExtensionRegistryLite) registry);
   }
   public interface StoredServerPaymentChannelsOrBuilder extends
       // @@protoc_insertion_point(interface_extends:paymentchannels.StoredServerPaymentChannels)
@@ -37,43 +43,34 @@ public final class ServerState {
         int index);
   }
   /**
-   * Protobuf type {@code paymentchannels.StoredServerPaymentChannels}
-   *
    * <pre>
    * A set of StoredPaymentChannel's
    * </pre>
+   *
+   * Protobuf type {@code paymentchannels.StoredServerPaymentChannels}
    */
-  public static final class StoredServerPaymentChannels extends
-      com.google.protobuf.GeneratedMessage implements
+  public  static final class StoredServerPaymentChannels extends
+      com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:paymentchannels.StoredServerPaymentChannels)
       StoredServerPaymentChannelsOrBuilder {
     // Use StoredServerPaymentChannels.newBuilder() to construct.
-    private StoredServerPaymentChannels(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+    private StoredServerPaymentChannels(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
       super(builder);
-      this.unknownFields = builder.getUnknownFields();
     }
-    private StoredServerPaymentChannels(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
-
-    private static final StoredServerPaymentChannels defaultInstance;
-    public static StoredServerPaymentChannels getDefaultInstance() {
-      return defaultInstance;
+    private StoredServerPaymentChannels() {
+      channels_ = java.util.Collections.emptyList();
     }
 
-    public StoredServerPaymentChannels getDefaultInstanceForType() {
-      return defaultInstance;
-    }
-
-    private final com.google.protobuf.UnknownFieldSet unknownFields;
     @java.lang.Override
     public final com.google.protobuf.UnknownFieldSet
-        getUnknownFields() {
+    getUnknownFields() {
       return this.unknownFields;
     }
     private StoredServerPaymentChannels(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
-      initFields();
+      this();
       int mutable_bitField0_ = 0;
       com.google.protobuf.UnknownFieldSet.Builder unknownFields =
           com.google.protobuf.UnknownFieldSet.newBuilder();
@@ -97,7 +94,8 @@ public final class ServerState {
                 channels_ = new java.util.ArrayList<org.bitcoinj.protocols.channels.ServerState.StoredServerPaymentChannel>();
                 mutable_bitField0_ |= 0x00000001;
               }
-              channels_.add(input.readMessage(org.bitcoinj.protocols.channels.ServerState.StoredServerPaymentChannel.PARSER, extensionRegistry));
+              channels_.add(
+                  input.readMessage(org.bitcoinj.protocols.channels.ServerState.StoredServerPaymentChannel.PARSER, extensionRegistry));
               break;
             }
           }
@@ -106,7 +104,7 @@ public final class ServerState {
         throw e.setUnfinishedMessage(this);
       } catch (java.io.IOException e) {
         throw new com.google.protobuf.InvalidProtocolBufferException(
-            e.getMessage()).setUnfinishedMessage(this);
+            e).setUnfinishedMessage(this);
       } finally {
         if (((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
           channels_ = java.util.Collections.unmodifiableList(channels_);
@@ -120,26 +118,11 @@ public final class ServerState {
       return org.bitcoinj.protocols.channels.ServerState.internal_static_paymentchannels_StoredServerPaymentChannels_descriptor;
     }
 
-    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
       return org.bitcoinj.protocols.channels.ServerState.internal_static_paymentchannels_StoredServerPaymentChannels_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
               org.bitcoinj.protocols.channels.ServerState.StoredServerPaymentChannels.class, org.bitcoinj.protocols.channels.ServerState.StoredServerPaymentChannels.Builder.class);
-    }
-
-    public static com.google.protobuf.Parser<StoredServerPaymentChannels> PARSER =
-        new com.google.protobuf.AbstractParser<StoredServerPaymentChannels>() {
-      public StoredServerPaymentChannels parsePartialFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws com.google.protobuf.InvalidProtocolBufferException {
-        return new StoredServerPaymentChannels(input, extensionRegistry);
-      }
-    };
-
-    @java.lang.Override
-    public com.google.protobuf.Parser<StoredServerPaymentChannels> getParserForType() {
-      return PARSER;
     }
 
     public static final int CHANNELS_FIELD_NUMBER = 1;
@@ -177,9 +160,6 @@ public final class ServerState {
       return channels_.get(index);
     }
 
-    private void initFields() {
-      channels_ = java.util.Collections.emptyList();
-    }
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
@@ -198,16 +178,14 @@ public final class ServerState {
 
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
-      getSerializedSize();
       for (int i = 0; i < channels_.size(); i++) {
         output.writeMessage(1, channels_.get(i));
       }
-      getUnknownFields().writeTo(output);
+      unknownFields.writeTo(output);
     }
 
-    private int memoizedSerializedSize = -1;
     public int getSerializedSize() {
-      int size = memoizedSerializedSize;
+      int size = memoizedSize;
       if (size != -1) return size;
 
       size = 0;
@@ -215,16 +193,43 @@ public final class ServerState {
         size += com.google.protobuf.CodedOutputStream
           .computeMessageSize(1, channels_.get(i));
       }
-      size += getUnknownFields().getSerializedSize();
-      memoizedSerializedSize = size;
+      size += unknownFields.getSerializedSize();
+      memoizedSize = size;
       return size;
     }
 
     private static final long serialVersionUID = 0L;
     @java.lang.Override
-    protected java.lang.Object writeReplace()
-        throws java.io.ObjectStreamException {
-      return super.writeReplace();
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof org.bitcoinj.protocols.channels.ServerState.StoredServerPaymentChannels)) {
+        return super.equals(obj);
+      }
+      org.bitcoinj.protocols.channels.ServerState.StoredServerPaymentChannels other = (org.bitcoinj.protocols.channels.ServerState.StoredServerPaymentChannels) obj;
+
+      boolean result = true;
+      result = result && getChannelsList()
+          .equals(other.getChannelsList());
+      result = result && unknownFields.equals(other.unknownFields);
+      return result;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptorForType().hashCode();
+      if (getChannelsCount() > 0) {
+        hash = (37 * hash) + CHANNELS_FIELD_NUMBER;
+        hash = (53 * hash) + getChannelsList().hashCode();
+      }
+      hash = (29 * hash) + unknownFields.hashCode();
+      memoizedHashCode = hash;
+      return hash;
     }
 
     public static org.bitcoinj.protocols.channels.ServerState.StoredServerPaymentChannels parseFrom(
@@ -250,58 +255,69 @@ public final class ServerState {
     }
     public static org.bitcoinj.protocols.channels.ServerState.StoredServerPaymentChannels parseFrom(java.io.InputStream input)
         throws java.io.IOException {
-      return PARSER.parseFrom(input);
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
     }
     public static org.bitcoinj.protocols.channels.ServerState.StoredServerPaymentChannels parseFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      return PARSER.parseFrom(input, extensionRegistry);
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
     }
     public static org.bitcoinj.protocols.channels.ServerState.StoredServerPaymentChannels parseDelimitedFrom(java.io.InputStream input)
         throws java.io.IOException {
-      return PARSER.parseDelimitedFrom(input);
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
     }
     public static org.bitcoinj.protocols.channels.ServerState.StoredServerPaymentChannels parseDelimitedFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      return PARSER.parseDelimitedFrom(input, extensionRegistry);
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
     }
     public static org.bitcoinj.protocols.channels.ServerState.StoredServerPaymentChannels parseFrom(
         com.google.protobuf.CodedInputStream input)
         throws java.io.IOException {
-      return PARSER.parseFrom(input);
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
     }
     public static org.bitcoinj.protocols.channels.ServerState.StoredServerPaymentChannels parseFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      return PARSER.parseFrom(input, extensionRegistry);
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
     }
 
-    public static Builder newBuilder() { return Builder.create(); }
     public Builder newBuilderForType() { return newBuilder(); }
-    public static Builder newBuilder(org.bitcoinj.protocols.channels.ServerState.StoredServerPaymentChannels prototype) {
-      return newBuilder().mergeFrom(prototype);
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
     }
-    public Builder toBuilder() { return newBuilder(this); }
+    public static Builder newBuilder(org.bitcoinj.protocols.channels.ServerState.StoredServerPaymentChannels prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
 
     @java.lang.Override
     protected Builder newBuilderForType(
-        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
       Builder builder = new Builder(parent);
       return builder;
     }
     /**
-     * Protobuf type {@code paymentchannels.StoredServerPaymentChannels}
-     *
      * <pre>
      * A set of StoredPaymentChannel's
      * </pre>
+     *
+     * Protobuf type {@code paymentchannels.StoredServerPaymentChannels}
      */
     public static final class Builder extends
-        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
         // @@protoc_insertion_point(builder_implements:paymentchannels.StoredServerPaymentChannels)
         org.bitcoinj.protocols.channels.ServerState.StoredServerPaymentChannelsOrBuilder {
       public static final com.google.protobuf.Descriptors.Descriptor
@@ -309,7 +325,7 @@ public final class ServerState {
         return org.bitcoinj.protocols.channels.ServerState.internal_static_paymentchannels_StoredServerPaymentChannels_descriptor;
       }
 
-      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
           internalGetFieldAccessorTable() {
         return org.bitcoinj.protocols.channels.ServerState.internal_static_paymentchannels_StoredServerPaymentChannels_fieldAccessorTable
             .ensureFieldAccessorsInitialized(
@@ -322,19 +338,16 @@ public final class ServerState {
       }
 
       private Builder(
-          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
         super(parent);
         maybeForceBuilderInitialization();
       }
       private void maybeForceBuilderInitialization() {
-        if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+        if (com.google.protobuf.GeneratedMessageV3
+                .alwaysUseFieldBuilders) {
           getChannelsFieldBuilder();
         }
       }
-      private static Builder create() {
-        return new Builder();
-      }
-
       public Builder clear() {
         super.clear();
         if (channelsBuilder_ == null) {
@@ -344,10 +357,6 @@ public final class ServerState {
           channelsBuilder_.clear();
         }
         return this;
-      }
-
-      public Builder clone() {
-        return create().mergeFrom(buildPartial());
       }
 
       public com.google.protobuf.Descriptors.Descriptor
@@ -383,6 +392,32 @@ public final class ServerState {
         return result;
       }
 
+      public Builder clone() {
+        return (Builder) super.clone();
+      }
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          Object value) {
+        return (Builder) super.setField(field, value);
+      }
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return (Builder) super.clearField(field);
+      }
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return (Builder) super.clearOneof(oneof);
+      }
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, Object value) {
+        return (Builder) super.setRepeatedField(field, index, value);
+      }
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          Object value) {
+        return (Builder) super.addRepeatedField(field, value);
+      }
       public Builder mergeFrom(com.google.protobuf.Message other) {
         if (other instanceof org.bitcoinj.protocols.channels.ServerState.StoredServerPaymentChannels) {
           return mergeFrom((org.bitcoinj.protocols.channels.ServerState.StoredServerPaymentChannels)other);
@@ -413,21 +448,21 @@ public final class ServerState {
               channels_ = other.channels_;
               bitField0_ = (bitField0_ & ~0x00000001);
               channelsBuilder_ = 
-                com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders ?
+                com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
                    getChannelsFieldBuilder() : null;
             } else {
               channelsBuilder_.addAllMessages(other.channels_);
             }
           }
         }
-        this.mergeUnknownFields(other.getUnknownFields());
+        this.mergeUnknownFields(other.unknownFields);
+        onChanged();
         return this;
       }
 
       public final boolean isInitialized() {
         for (int i = 0; i < getChannelsCount(); i++) {
           if (!getChannels(i).isInitialized()) {
-            
             return false;
           }
         }
@@ -443,7 +478,7 @@ public final class ServerState {
           parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
         } catch (com.google.protobuf.InvalidProtocolBufferException e) {
           parsedMessage = (org.bitcoinj.protocols.channels.ServerState.StoredServerPaymentChannels) e.getUnfinishedMessage();
-          throw e;
+          throw e.unwrapIOException();
         } finally {
           if (parsedMessage != null) {
             mergeFrom(parsedMessage);
@@ -462,7 +497,7 @@ public final class ServerState {
          }
       }
 
-      private com.google.protobuf.RepeatedFieldBuilder<
+      private com.google.protobuf.RepeatedFieldBuilderV3<
           org.bitcoinj.protocols.channels.ServerState.StoredServerPaymentChannel, org.bitcoinj.protocols.channels.ServerState.StoredServerPaymentChannel.Builder, org.bitcoinj.protocols.channels.ServerState.StoredServerPaymentChannelOrBuilder> channelsBuilder_;
 
       /**
@@ -678,11 +713,11 @@ public final class ServerState {
            getChannelsBuilderList() {
         return getChannelsFieldBuilder().getBuilderList();
       }
-      private com.google.protobuf.RepeatedFieldBuilder<
+      private com.google.protobuf.RepeatedFieldBuilderV3<
           org.bitcoinj.protocols.channels.ServerState.StoredServerPaymentChannel, org.bitcoinj.protocols.channels.ServerState.StoredServerPaymentChannel.Builder, org.bitcoinj.protocols.channels.ServerState.StoredServerPaymentChannelOrBuilder> 
           getChannelsFieldBuilder() {
         if (channelsBuilder_ == null) {
-          channelsBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
+          channelsBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
               org.bitcoinj.protocols.channels.ServerState.StoredServerPaymentChannel, org.bitcoinj.protocols.channels.ServerState.StoredServerPaymentChannel.Builder, org.bitcoinj.protocols.channels.ServerState.StoredServerPaymentChannelOrBuilder>(
                   channels_,
                   ((bitField0_ & 0x00000001) == 0x00000001),
@@ -692,16 +727,53 @@ public final class ServerState {
         }
         return channelsBuilder_;
       }
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFields(unknownFields);
+      }
+
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
 
       // @@protoc_insertion_point(builder_scope:paymentchannels.StoredServerPaymentChannels)
     }
 
+    // @@protoc_insertion_point(class_scope:paymentchannels.StoredServerPaymentChannels)
+    private static final org.bitcoinj.protocols.channels.ServerState.StoredServerPaymentChannels DEFAULT_INSTANCE;
     static {
-      defaultInstance = new StoredServerPaymentChannels(true);
-      defaultInstance.initFields();
+      DEFAULT_INSTANCE = new org.bitcoinj.protocols.channels.ServerState.StoredServerPaymentChannels();
     }
 
-    // @@protoc_insertion_point(class_scope:paymentchannels.StoredServerPaymentChannels)
+    public static org.bitcoinj.protocols.channels.ServerState.StoredServerPaymentChannels getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    @java.lang.Deprecated public static final com.google.protobuf.Parser<StoredServerPaymentChannels>
+        PARSER = new com.google.protobuf.AbstractParser<StoredServerPaymentChannels>() {
+      public StoredServerPaymentChannels parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+          return new StoredServerPaymentChannels(input, extensionRegistry);
+      }
+    };
+
+    public static com.google.protobuf.Parser<StoredServerPaymentChannels> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<StoredServerPaymentChannels> getParserForType() {
+      return PARSER;
+    }
+
+    public org.bitcoinj.protocols.channels.ServerState.StoredServerPaymentChannels getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
   }
 
   public interface StoredServerPaymentChannelOrBuilder extends
@@ -772,60 +844,58 @@ public final class ServerState {
     int getMajorVersion();
 
     /**
-     * <code>optional bytes clientKey = 8;</code>
-     *
      * <pre>
      * Protocol version 2 only - the P2SH hash doesn't contain the required key
      * </pre>
+     *
+     * <code>optional bytes clientKey = 8;</code>
      */
     boolean hasClientKey();
     /**
-     * <code>optional bytes clientKey = 8;</code>
-     *
      * <pre>
      * Protocol version 2 only - the P2SH hash doesn't contain the required key
      * </pre>
+     *
+     * <code>optional bytes clientKey = 8;</code>
      */
     com.google.protobuf.ByteString getClientKey();
   }
   /**
-   * Protobuf type {@code paymentchannels.StoredServerPaymentChannel}
-   *
    * <pre>
    * A server-side payment channel in serialized form, which can be reloaded later if the server restarts
    * </pre>
+   *
+   * Protobuf type {@code paymentchannels.StoredServerPaymentChannel}
    */
-  public static final class StoredServerPaymentChannel extends
-      com.google.protobuf.GeneratedMessage implements
+  public  static final class StoredServerPaymentChannel extends
+      com.google.protobuf.GeneratedMessageV3 implements
       // @@protoc_insertion_point(message_implements:paymentchannels.StoredServerPaymentChannel)
       StoredServerPaymentChannelOrBuilder {
     // Use StoredServerPaymentChannel.newBuilder() to construct.
-    private StoredServerPaymentChannel(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+    private StoredServerPaymentChannel(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
       super(builder);
-      this.unknownFields = builder.getUnknownFields();
     }
-    private StoredServerPaymentChannel(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
-
-    private static final StoredServerPaymentChannel defaultInstance;
-    public static StoredServerPaymentChannel getDefaultInstance() {
-      return defaultInstance;
+    private StoredServerPaymentChannel() {
+      bestValueToMe_ = 0L;
+      bestValueSignature_ = com.google.protobuf.ByteString.EMPTY;
+      refundTransactionUnlockTimeSecs_ = 0L;
+      contractTransaction_ = com.google.protobuf.ByteString.EMPTY;
+      clientOutput_ = com.google.protobuf.ByteString.EMPTY;
+      myKey_ = com.google.protobuf.ByteString.EMPTY;
+      majorVersion_ = 1;
+      clientKey_ = com.google.protobuf.ByteString.EMPTY;
     }
 
-    public StoredServerPaymentChannel getDefaultInstanceForType() {
-      return defaultInstance;
-    }
-
-    private final com.google.protobuf.UnknownFieldSet unknownFields;
     @java.lang.Override
     public final com.google.protobuf.UnknownFieldSet
-        getUnknownFields() {
+    getUnknownFields() {
       return this.unknownFields;
     }
     private StoredServerPaymentChannel(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
-      initFields();
+      this();
       int mutable_bitField0_ = 0;
       com.google.protobuf.UnknownFieldSet.Builder unknownFields =
           com.google.protobuf.UnknownFieldSet.newBuilder();
@@ -890,7 +960,7 @@ public final class ServerState {
         throw e.setUnfinishedMessage(this);
       } catch (java.io.IOException e) {
         throw new com.google.protobuf.InvalidProtocolBufferException(
-            e.getMessage()).setUnfinishedMessage(this);
+            e).setUnfinishedMessage(this);
       } finally {
         this.unknownFields = unknownFields.build();
         makeExtensionsImmutable();
@@ -901,26 +971,11 @@ public final class ServerState {
       return org.bitcoinj.protocols.channels.ServerState.internal_static_paymentchannels_StoredServerPaymentChannel_descriptor;
     }
 
-    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
       return org.bitcoinj.protocols.channels.ServerState.internal_static_paymentchannels_StoredServerPaymentChannel_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
               org.bitcoinj.protocols.channels.ServerState.StoredServerPaymentChannel.class, org.bitcoinj.protocols.channels.ServerState.StoredServerPaymentChannel.Builder.class);
-    }
-
-    public static com.google.protobuf.Parser<StoredServerPaymentChannel> PARSER =
-        new com.google.protobuf.AbstractParser<StoredServerPaymentChannel>() {
-      public StoredServerPaymentChannel parsePartialFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws com.google.protobuf.InvalidProtocolBufferException {
-        return new StoredServerPaymentChannel(input, extensionRegistry);
-      }
-    };
-
-    @java.lang.Override
-    public com.google.protobuf.Parser<StoredServerPaymentChannel> getParserForType() {
-      return PARSER;
     }
 
     private int bitField0_;
@@ -1032,36 +1087,26 @@ public final class ServerState {
     public static final int CLIENTKEY_FIELD_NUMBER = 8;
     private com.google.protobuf.ByteString clientKey_;
     /**
-     * <code>optional bytes clientKey = 8;</code>
-     *
      * <pre>
      * Protocol version 2 only - the P2SH hash doesn't contain the required key
      * </pre>
+     *
+     * <code>optional bytes clientKey = 8;</code>
      */
     public boolean hasClientKey() {
       return ((bitField0_ & 0x00000080) == 0x00000080);
     }
     /**
-     * <code>optional bytes clientKey = 8;</code>
-     *
      * <pre>
      * Protocol version 2 only - the P2SH hash doesn't contain the required key
      * </pre>
+     *
+     * <code>optional bytes clientKey = 8;</code>
      */
     public com.google.protobuf.ByteString getClientKey() {
       return clientKey_;
     }
 
-    private void initFields() {
-      bestValueToMe_ = 0L;
-      bestValueSignature_ = com.google.protobuf.ByteString.EMPTY;
-      refundTransactionUnlockTimeSecs_ = 0L;
-      contractTransaction_ = com.google.protobuf.ByteString.EMPTY;
-      clientOutput_ = com.google.protobuf.ByteString.EMPTY;
-      myKey_ = com.google.protobuf.ByteString.EMPTY;
-      majorVersion_ = 1;
-      clientKey_ = com.google.protobuf.ByteString.EMPTY;
-    }
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
@@ -1090,7 +1135,6 @@ public final class ServerState {
 
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
-      getSerializedSize();
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
         output.writeUInt64(1, bestValueToMe_);
       }
@@ -1115,12 +1159,11 @@ public final class ServerState {
       if (((bitField0_ & 0x00000080) == 0x00000080)) {
         output.writeBytes(8, clientKey_);
       }
-      getUnknownFields().writeTo(output);
+      unknownFields.writeTo(output);
     }
 
-    private int memoizedSerializedSize = -1;
     public int getSerializedSize() {
-      int size = memoizedSerializedSize;
+      int size = memoizedSize;
       if (size != -1) return size;
 
       size = 0;
@@ -1156,16 +1199,111 @@ public final class ServerState {
         size += com.google.protobuf.CodedOutputStream
           .computeBytesSize(8, clientKey_);
       }
-      size += getUnknownFields().getSerializedSize();
-      memoizedSerializedSize = size;
+      size += unknownFields.getSerializedSize();
+      memoizedSize = size;
       return size;
     }
 
     private static final long serialVersionUID = 0L;
     @java.lang.Override
-    protected java.lang.Object writeReplace()
-        throws java.io.ObjectStreamException {
-      return super.writeReplace();
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof org.bitcoinj.protocols.channels.ServerState.StoredServerPaymentChannel)) {
+        return super.equals(obj);
+      }
+      org.bitcoinj.protocols.channels.ServerState.StoredServerPaymentChannel other = (org.bitcoinj.protocols.channels.ServerState.StoredServerPaymentChannel) obj;
+
+      boolean result = true;
+      result = result && (hasBestValueToMe() == other.hasBestValueToMe());
+      if (hasBestValueToMe()) {
+        result = result && (getBestValueToMe()
+            == other.getBestValueToMe());
+      }
+      result = result && (hasBestValueSignature() == other.hasBestValueSignature());
+      if (hasBestValueSignature()) {
+        result = result && getBestValueSignature()
+            .equals(other.getBestValueSignature());
+      }
+      result = result && (hasRefundTransactionUnlockTimeSecs() == other.hasRefundTransactionUnlockTimeSecs());
+      if (hasRefundTransactionUnlockTimeSecs()) {
+        result = result && (getRefundTransactionUnlockTimeSecs()
+            == other.getRefundTransactionUnlockTimeSecs());
+      }
+      result = result && (hasContractTransaction() == other.hasContractTransaction());
+      if (hasContractTransaction()) {
+        result = result && getContractTransaction()
+            .equals(other.getContractTransaction());
+      }
+      result = result && (hasClientOutput() == other.hasClientOutput());
+      if (hasClientOutput()) {
+        result = result && getClientOutput()
+            .equals(other.getClientOutput());
+      }
+      result = result && (hasMyKey() == other.hasMyKey());
+      if (hasMyKey()) {
+        result = result && getMyKey()
+            .equals(other.getMyKey());
+      }
+      result = result && (hasMajorVersion() == other.hasMajorVersion());
+      if (hasMajorVersion()) {
+        result = result && (getMajorVersion()
+            == other.getMajorVersion());
+      }
+      result = result && (hasClientKey() == other.hasClientKey());
+      if (hasClientKey()) {
+        result = result && getClientKey()
+            .equals(other.getClientKey());
+      }
+      result = result && unknownFields.equals(other.unknownFields);
+      return result;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptorForType().hashCode();
+      if (hasBestValueToMe()) {
+        hash = (37 * hash) + BESTVALUETOME_FIELD_NUMBER;
+        hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+            getBestValueToMe());
+      }
+      if (hasBestValueSignature()) {
+        hash = (37 * hash) + BESTVALUESIGNATURE_FIELD_NUMBER;
+        hash = (53 * hash) + getBestValueSignature().hashCode();
+      }
+      if (hasRefundTransactionUnlockTimeSecs()) {
+        hash = (37 * hash) + REFUNDTRANSACTIONUNLOCKTIMESECS_FIELD_NUMBER;
+        hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+            getRefundTransactionUnlockTimeSecs());
+      }
+      if (hasContractTransaction()) {
+        hash = (37 * hash) + CONTRACTTRANSACTION_FIELD_NUMBER;
+        hash = (53 * hash) + getContractTransaction().hashCode();
+      }
+      if (hasClientOutput()) {
+        hash = (37 * hash) + CLIENTOUTPUT_FIELD_NUMBER;
+        hash = (53 * hash) + getClientOutput().hashCode();
+      }
+      if (hasMyKey()) {
+        hash = (37 * hash) + MYKEY_FIELD_NUMBER;
+        hash = (53 * hash) + getMyKey().hashCode();
+      }
+      if (hasMajorVersion()) {
+        hash = (37 * hash) + MAJORVERSION_FIELD_NUMBER;
+        hash = (53 * hash) + getMajorVersion();
+      }
+      if (hasClientKey()) {
+        hash = (37 * hash) + CLIENTKEY_FIELD_NUMBER;
+        hash = (53 * hash) + getClientKey().hashCode();
+      }
+      hash = (29 * hash) + unknownFields.hashCode();
+      memoizedHashCode = hash;
+      return hash;
     }
 
     public static org.bitcoinj.protocols.channels.ServerState.StoredServerPaymentChannel parseFrom(
@@ -1191,58 +1329,69 @@ public final class ServerState {
     }
     public static org.bitcoinj.protocols.channels.ServerState.StoredServerPaymentChannel parseFrom(java.io.InputStream input)
         throws java.io.IOException {
-      return PARSER.parseFrom(input);
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
     }
     public static org.bitcoinj.protocols.channels.ServerState.StoredServerPaymentChannel parseFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      return PARSER.parseFrom(input, extensionRegistry);
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
     }
     public static org.bitcoinj.protocols.channels.ServerState.StoredServerPaymentChannel parseDelimitedFrom(java.io.InputStream input)
         throws java.io.IOException {
-      return PARSER.parseDelimitedFrom(input);
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
     }
     public static org.bitcoinj.protocols.channels.ServerState.StoredServerPaymentChannel parseDelimitedFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      return PARSER.parseDelimitedFrom(input, extensionRegistry);
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
     }
     public static org.bitcoinj.protocols.channels.ServerState.StoredServerPaymentChannel parseFrom(
         com.google.protobuf.CodedInputStream input)
         throws java.io.IOException {
-      return PARSER.parseFrom(input);
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
     }
     public static org.bitcoinj.protocols.channels.ServerState.StoredServerPaymentChannel parseFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      return PARSER.parseFrom(input, extensionRegistry);
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
     }
 
-    public static Builder newBuilder() { return Builder.create(); }
     public Builder newBuilderForType() { return newBuilder(); }
-    public static Builder newBuilder(org.bitcoinj.protocols.channels.ServerState.StoredServerPaymentChannel prototype) {
-      return newBuilder().mergeFrom(prototype);
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
     }
-    public Builder toBuilder() { return newBuilder(this); }
+    public static Builder newBuilder(org.bitcoinj.protocols.channels.ServerState.StoredServerPaymentChannel prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
 
     @java.lang.Override
     protected Builder newBuilderForType(
-        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
       Builder builder = new Builder(parent);
       return builder;
     }
     /**
-     * Protobuf type {@code paymentchannels.StoredServerPaymentChannel}
-     *
      * <pre>
      * A server-side payment channel in serialized form, which can be reloaded later if the server restarts
      * </pre>
+     *
+     * Protobuf type {@code paymentchannels.StoredServerPaymentChannel}
      */
     public static final class Builder extends
-        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
         // @@protoc_insertion_point(builder_implements:paymentchannels.StoredServerPaymentChannel)
         org.bitcoinj.protocols.channels.ServerState.StoredServerPaymentChannelOrBuilder {
       public static final com.google.protobuf.Descriptors.Descriptor
@@ -1250,7 +1399,7 @@ public final class ServerState {
         return org.bitcoinj.protocols.channels.ServerState.internal_static_paymentchannels_StoredServerPaymentChannel_descriptor;
       }
 
-      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
           internalGetFieldAccessorTable() {
         return org.bitcoinj.protocols.channels.ServerState.internal_static_paymentchannels_StoredServerPaymentChannel_fieldAccessorTable
             .ensureFieldAccessorsInitialized(
@@ -1263,18 +1412,15 @@ public final class ServerState {
       }
 
       private Builder(
-          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
         super(parent);
         maybeForceBuilderInitialization();
       }
       private void maybeForceBuilderInitialization() {
-        if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+        if (com.google.protobuf.GeneratedMessageV3
+                .alwaysUseFieldBuilders) {
         }
       }
-      private static Builder create() {
-        return new Builder();
-      }
-
       public Builder clear() {
         super.clear();
         bestValueToMe_ = 0L;
@@ -1294,10 +1440,6 @@ public final class ServerState {
         clientKey_ = com.google.protobuf.ByteString.EMPTY;
         bitField0_ = (bitField0_ & ~0x00000080);
         return this;
-      }
-
-      public Builder clone() {
-        return create().mergeFrom(buildPartial());
       }
 
       public com.google.protobuf.Descriptors.Descriptor
@@ -1358,6 +1500,32 @@ public final class ServerState {
         return result;
       }
 
+      public Builder clone() {
+        return (Builder) super.clone();
+      }
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          Object value) {
+        return (Builder) super.setField(field, value);
+      }
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return (Builder) super.clearField(field);
+      }
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return (Builder) super.clearOneof(oneof);
+      }
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, Object value) {
+        return (Builder) super.setRepeatedField(field, index, value);
+      }
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          Object value) {
+        return (Builder) super.addRepeatedField(field, value);
+      }
       public Builder mergeFrom(com.google.protobuf.Message other) {
         if (other instanceof org.bitcoinj.protocols.channels.ServerState.StoredServerPaymentChannel) {
           return mergeFrom((org.bitcoinj.protocols.channels.ServerState.StoredServerPaymentChannel)other);
@@ -1393,25 +1561,22 @@ public final class ServerState {
         if (other.hasClientKey()) {
           setClientKey(other.getClientKey());
         }
-        this.mergeUnknownFields(other.getUnknownFields());
+        this.mergeUnknownFields(other.unknownFields);
+        onChanged();
         return this;
       }
 
       public final boolean isInitialized() {
         if (!hasBestValueToMe()) {
-          
           return false;
         }
         if (!hasRefundTransactionUnlockTimeSecs()) {
-          
           return false;
         }
         if (!hasContractTransaction()) {
-          
           return false;
         }
         if (!hasMyKey()) {
-          
           return false;
         }
         return true;
@@ -1426,7 +1591,7 @@ public final class ServerState {
           parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
         } catch (com.google.protobuf.InvalidProtocolBufferException e) {
           parsedMessage = (org.bitcoinj.protocols.channels.ServerState.StoredServerPaymentChannel) e.getUnfinishedMessage();
-          throw e;
+          throw e.unwrapIOException();
         } finally {
           if (parsedMessage != null) {
             mergeFrom(parsedMessage);
@@ -1674,31 +1839,31 @@ public final class ServerState {
 
       private com.google.protobuf.ByteString clientKey_ = com.google.protobuf.ByteString.EMPTY;
       /**
-       * <code>optional bytes clientKey = 8;</code>
-       *
        * <pre>
        * Protocol version 2 only - the P2SH hash doesn't contain the required key
        * </pre>
+       *
+       * <code>optional bytes clientKey = 8;</code>
        */
       public boolean hasClientKey() {
         return ((bitField0_ & 0x00000080) == 0x00000080);
       }
       /**
-       * <code>optional bytes clientKey = 8;</code>
-       *
        * <pre>
        * Protocol version 2 only - the P2SH hash doesn't contain the required key
        * </pre>
+       *
+       * <code>optional bytes clientKey = 8;</code>
        */
       public com.google.protobuf.ByteString getClientKey() {
         return clientKey_;
       }
       /**
-       * <code>optional bytes clientKey = 8;</code>
-       *
        * <pre>
        * Protocol version 2 only - the P2SH hash doesn't contain the required key
        * </pre>
+       *
+       * <code>optional bytes clientKey = 8;</code>
        */
       public Builder setClientKey(com.google.protobuf.ByteString value) {
         if (value == null) {
@@ -1710,11 +1875,11 @@ public final class ServerState {
         return this;
       }
       /**
-       * <code>optional bytes clientKey = 8;</code>
-       *
        * <pre>
        * Protocol version 2 only - the P2SH hash doesn't contain the required key
        * </pre>
+       *
+       * <code>optional bytes clientKey = 8;</code>
        */
       public Builder clearClientKey() {
         bitField0_ = (bitField0_ & ~0x00000080);
@@ -1722,34 +1887,71 @@ public final class ServerState {
         onChanged();
         return this;
       }
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFields(unknownFields);
+      }
+
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
 
       // @@protoc_insertion_point(builder_scope:paymentchannels.StoredServerPaymentChannel)
     }
 
+    // @@protoc_insertion_point(class_scope:paymentchannels.StoredServerPaymentChannel)
+    private static final org.bitcoinj.protocols.channels.ServerState.StoredServerPaymentChannel DEFAULT_INSTANCE;
     static {
-      defaultInstance = new StoredServerPaymentChannel(true);
-      defaultInstance.initFields();
+      DEFAULT_INSTANCE = new org.bitcoinj.protocols.channels.ServerState.StoredServerPaymentChannel();
     }
 
-    // @@protoc_insertion_point(class_scope:paymentchannels.StoredServerPaymentChannel)
+    public static org.bitcoinj.protocols.channels.ServerState.StoredServerPaymentChannel getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    @java.lang.Deprecated public static final com.google.protobuf.Parser<StoredServerPaymentChannel>
+        PARSER = new com.google.protobuf.AbstractParser<StoredServerPaymentChannel>() {
+      public StoredServerPaymentChannel parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+          return new StoredServerPaymentChannel(input, extensionRegistry);
+      }
+    };
+
+    public static com.google.protobuf.Parser<StoredServerPaymentChannel> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<StoredServerPaymentChannel> getParserForType() {
+      return PARSER;
+    }
+
+    public org.bitcoinj.protocols.channels.ServerState.StoredServerPaymentChannel getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
   }
 
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_paymentchannels_StoredServerPaymentChannels_descriptor;
-  private static
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_paymentchannels_StoredServerPaymentChannels_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_paymentchannels_StoredServerPaymentChannel_descriptor;
-  private static
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_paymentchannels_StoredServerPaymentChannel_fieldAccessorTable;
 
   public static com.google.protobuf.Descriptors.FileDescriptor
       getDescriptor() {
     return descriptor;
   }
-  private static com.google.protobuf.Descriptors.FileDescriptor
+  private static  com.google.protobuf.Descriptors.FileDescriptor
       descriptor;
   static {
     java.lang.String[] descriptorData = {
@@ -1780,13 +1982,13 @@ public final class ServerState {
     internal_static_paymentchannels_StoredServerPaymentChannels_descriptor =
       getDescriptor().getMessageTypes().get(0);
     internal_static_paymentchannels_StoredServerPaymentChannels_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_paymentchannels_StoredServerPaymentChannels_descriptor,
         new java.lang.String[] { "Channels", });
     internal_static_paymentchannels_StoredServerPaymentChannel_descriptor =
       getDescriptor().getMessageTypes().get(1);
     internal_static_paymentchannels_StoredServerPaymentChannel_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_paymentchannels_StoredServerPaymentChannel_descriptor,
         new java.lang.String[] { "BestValueToMe", "BestValueSignature", "RefundTransactionUnlockTimeSecs", "ContractTransaction", "ClientOutput", "MyKey", "MajorVersion", "ClientKey", });
   }

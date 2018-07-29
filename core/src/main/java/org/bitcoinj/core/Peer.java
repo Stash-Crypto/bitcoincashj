@@ -19,6 +19,9 @@ package org.bitcoinj.core;
 import com.google.common.base.*;
 import com.google.common.base.Objects;
 import org.bitcoinj.core.listeners.*;
+import org.bitcoinj.net.AbstractTimeoutHandler;
+import org.bitcoinj.net.NioClient;
+import org.bitcoinj.net.NioClientManager;
 import org.bitcoinj.net.StreamConnection;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.BlockStoreException;
@@ -36,6 +39,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
+import java.net.SocketAddress;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CopyOnWriteArraySet;
@@ -51,8 +55,8 @@ import static com.google.common.base.Preconditions.checkState;
  * handles low-level message (de)serialization.</p>
  *
  * <p>Note that timeouts are handled by the extended
- * {@link org.bitcoinj.net.AbstractTimeoutHandler} and timeout is automatically disabled (using
- * {@link org.bitcoinj.net.AbstractTimeoutHandler#setTimeoutEnabled(boolean)}) once the version
+ * {@link AbstractTimeoutHandler} and timeout is automatically disabled (using
+ * {@link AbstractTimeoutHandler#setTimeoutEnabled(boolean)}) once the version
  * handshake completes.</p>
  */
 public class Peer extends PeerSocketHandler {
@@ -65,19 +69,19 @@ public class Peer extends PeerSocketHandler {
     private final Context context;
 
     private final CopyOnWriteArrayList<ListenerRegistration<BlocksDownloadedEventListener>> blocksDownloadedEventListeners
-        = new CopyOnWriteArrayList<ListenerRegistration<BlocksDownloadedEventListener>>();
+        = new CopyOnWriteArrayList<>();
     private final CopyOnWriteArrayList<ListenerRegistration<ChainDownloadStartedEventListener>> chainDownloadStartedEventListeners
-        = new CopyOnWriteArrayList<ListenerRegistration<ChainDownloadStartedEventListener>>();
+        = new CopyOnWriteArrayList<>();
     private final CopyOnWriteArrayList<ListenerRegistration<PeerConnectedEventListener>> connectedEventListeners
-        = new CopyOnWriteArrayList<ListenerRegistration<PeerConnectedEventListener>>();
+        = new CopyOnWriteArrayList<>();
     private final CopyOnWriteArrayList<ListenerRegistration<PeerDisconnectedEventListener>> disconnectedEventListeners
-        = new CopyOnWriteArrayList<ListenerRegistration<PeerDisconnectedEventListener>>();
+        = new CopyOnWriteArrayList<>();
     private final CopyOnWriteArrayList<ListenerRegistration<GetDataEventListener>> getDataEventListeners
-        = new CopyOnWriteArrayList<ListenerRegistration<GetDataEventListener>>();
+        = new CopyOnWriteArrayList<>();
     private final CopyOnWriteArrayList<ListenerRegistration<PreMessageReceivedEventListener>> preMessageReceivedEventListeners
-        = new CopyOnWriteArrayList<ListenerRegistration<PreMessageReceivedEventListener>>();
+        = new CopyOnWriteArrayList<>();
     private final CopyOnWriteArrayList<ListenerRegistration<OnTransactionBroadcastListener>> onTransactionEventListeners
-        = new CopyOnWriteArrayList<ListenerRegistration<OnTransactionBroadcastListener>>();
+        = new CopyOnWriteArrayList<>();
     // Whether to try and download blocks and transactions from this peer. Set to false by PeerGroup if not the
     // primary peer. This is to avoid redundant work and concurrency problems with downloading the same chain
     // in parallel.
@@ -123,14 +127,14 @@ public class Peer extends PeerSocketHandler {
     //
     // It is important to avoid a nasty edge case where we can end up with parallel chain downloads proceeding
     // simultaneously if we were to receive a newly solved block whilst parts of the chain are streaming to us.
-    private final HashSet<Sha256Hash> pendingBlockDownloads = new HashSet<Sha256Hash>();
+    private final HashSet<Sha256Hash> pendingBlockDownloads = new HashSet<>();
     // Keep references to TransactionConfidence objects for transactions that were announced by a remote peer, but
     // which we haven't downloaded yet. These objects are de-duplicated by the TxConfidenceTable class.
     // Once the tx is downloaded (by some peer), the Transaction object that is created will have a reference to
     // the confidence object held inside it, and it's then up to the event listeners that receive the Transaction
     // to keep it pinned to the root set if they care about this data.
     @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
-    private final HashSet<TransactionConfidence> pendingTxDownloads = new HashSet<TransactionConfidence>();
+    private final HashSet<TransactionConfidence> pendingTxDownloads = new HashSet<>();
     // The lowest version number we're willing to accept. Lower than this will result in an immediate disconnect.
     private volatile int vMinProtocolVersion;
     // When an API user explicitly requests a block or transaction from a peer, the InventoryItem is put here
@@ -178,9 +182,9 @@ public class Peer extends PeerSocketHandler {
      *
      * <p>Note that this does <b>NOT</b> make a connection to the given remoteAddress, it only creates a handler for a
      * connection. If you want to create a one-off connection, create a Peer and pass it to
-     * {@link org.bitcoinj.net.NioClientManager#openConnection(java.net.SocketAddress, StreamConnection)}
+     * {@link NioClientManager#openConnection(SocketAddress, StreamConnection)}
      * or
-     * {@link org.bitcoinj.net.NioClient#NioClient(java.net.SocketAddress, StreamConnection, int)}.</p>
+     * {@link NioClient#NioClient(SocketAddress, StreamConnection, int)}.</p>
      *
      * <p>The remoteAddress provided should match the remote address of the peer which is being connected to, and is
      * used to keep track of which peers relayed transactions and offer more descriptive logging.</p>
@@ -190,15 +194,15 @@ public class Peer extends PeerSocketHandler {
     }
 
     /**
-     * <p>Construct a peer that reads/writes from the given block chain. Transactions stored in a {@link org.bitcoinj.core.TxConfidenceTable}
+     * <p>Construct a peer that reads/writes from the given block chain. Transactions stored in a {@link TxConfidenceTable}
      * will have their confidence levels updated when a peer announces it, to reflect the greater likelyhood that
      * the transaction is valid.</p>
      *
      * <p>Note that this does <b>NOT</b> make a connection to the given remoteAddress, it only creates a handler for a
      * connection. If you want to create a one-off connection, create a Peer and pass it to
-     * {@link org.bitcoinj.net.NioClientManager#openConnection(java.net.SocketAddress, StreamConnection)}
+     * {@link NioClientManager#openConnection(SocketAddress, StreamConnection)}
      * or
-     * {@link org.bitcoinj.net.NioClient#NioClient(java.net.SocketAddress, StreamConnection, int)}.</p>
+     * {@link NioClient#NioClient(SocketAddress, StreamConnection, int)}.</p>
      *
      * <p>The remoteAddress provided should match the remote address of the peer which is being connected to, and is
      * used to keep track of which peers relayed transactions and offer more descriptive logging.</p>
@@ -209,15 +213,15 @@ public class Peer extends PeerSocketHandler {
     }
 
     /**
-     * <p>Construct a peer that reads/writes from the given block chain. Transactions stored in a {@link org.bitcoinj.core.TxConfidenceTable}
+     * <p>Construct a peer that reads/writes from the given block chain. Transactions stored in a {@link TxConfidenceTable}
      * will have their confidence levels updated when a peer announces it, to reflect the greater likelyhood that
      * the transaction is valid.</p>
      *
      * <p>Note that this does <b>NOT</b> make a connection to the given remoteAddress, it only creates a handler for a
      * connection. If you want to create a one-off connection, create a Peer and pass it to
-     * {@link org.bitcoinj.net.NioClientManager#openConnection(java.net.SocketAddress, StreamConnection)}
+     * {@link NioClientManager#openConnection(SocketAddress, StreamConnection)}
      * or
-     * {@link org.bitcoinj.net.NioClient#NioClient(java.net.SocketAddress, StreamConnection, int)}.</p>
+     * {@link NioClient#NioClient(SocketAddress, StreamConnection, int)}.</p>
      *
      * <p>The remoteAddress provided should match the remote address of the peer which is being connected to, and is
      * used to keep track of which peers relayed transactions and offer more descriptive logging.</p>
@@ -230,12 +234,12 @@ public class Peer extends PeerSocketHandler {
         this.vDownloadTxDependencyDepth = chain != null ? downloadTxDependencyDepth : 0;
         this.blockChain = chain;  // Allowed to be null.
         this.vDownloadData = chain != null;
-        this.getDataFutures = new CopyOnWriteArrayList<GetDataRequest>();
-        this.getAddrFutures = new LinkedList<SettableFuture<AddressMessage>>();
+        this.getDataFutures = new CopyOnWriteArrayList<>();
+        this.getAddrFutures = new LinkedList<>();
         this.fastCatchupTimeSecs = params.getGenesisBlock().getTimeSeconds();
-        this.pendingPings = new CopyOnWriteArrayList<PendingPing>();
+        this.pendingPings = new CopyOnWriteArrayList<>();
         this.vMinProtocolVersion = params.getProtocolVersionNum(NetworkParameters.ProtocolVersion.PONG);
-        this.wallets = new CopyOnWriteArrayList<Wallet>();
+        this.wallets = new CopyOnWriteArrayList<>();
         this.context = Context.get();
 
         this.versionHandshakeFuture.addListener(new Runnable() {
@@ -253,9 +257,9 @@ public class Peer extends PeerSocketHandler {
      *
      * <p>Note that this does <b>NOT</b> make a connection to the given remoteAddress, it only creates a handler for a
      * connection. If you want to create a one-off connection, create a Peer and pass it to
-     * {@link org.bitcoinj.net.NioClientManager#openConnection(java.net.SocketAddress, StreamConnection)}
+     * {@link NioClientManager#openConnection(SocketAddress, StreamConnection)}
      * or
-     * {@link org.bitcoinj.net.NioClient#NioClient(java.net.SocketAddress, StreamConnection, int)}.</p>
+     * {@link NioClient#NioClient(SocketAddress, StreamConnection, int)}.</p>
      *
      * <p>The remoteAddress provided should match the remote address of the peer which is being connected to, and is
      * used to keep track of which peers relayed transactions and offer more descriptive logging.</p>
@@ -348,7 +352,7 @@ public class Peer extends PeerSocketHandler {
 
     /** Registers a listener that is called when messages are received. */
     public void addGetDataEventListener(Executor executor, GetDataEventListener listener) {
-        getDataEventListeners.add(new ListenerRegistration<GetDataEventListener>(listener, executor));
+        getDataEventListeners.add(new ListenerRegistration<>(listener, executor));
     }
 
     /** Registers a listener that is called when a transaction is broadcast across the network */
@@ -358,7 +362,7 @@ public class Peer extends PeerSocketHandler {
 
     /** Registers a listener that is called when a transaction is broadcast across the network */
     public void addOnTransactionBroadcastListener(Executor executor, OnTransactionBroadcastListener listener) {
-        onTransactionEventListeners.add(new ListenerRegistration<OnTransactionBroadcastListener>(listener, executor));
+        onTransactionEventListeners.add(new ListenerRegistration<>(listener, executor));
     }
 
     /** Registers a listener that is called immediately before a message is received */
@@ -368,7 +372,7 @@ public class Peer extends PeerSocketHandler {
 
     /** Registers a listener that is called immediately before a message is received */
     public void addPreMessageReceivedEventListener(Executor executor, PreMessageReceivedEventListener listener) {
-        preMessageReceivedEventListeners.add(new ListenerRegistration<PreMessageReceivedEventListener>(listener, executor));
+        preMessageReceivedEventListeners.add(new ListenerRegistration<>(listener, executor));
     }
 
     public boolean removeBlocksDownloadedEventListener(BlocksDownloadedEventListener listener) {
@@ -564,8 +568,9 @@ public class Peer extends PeerSocketHandler {
             close();
             return;
         }
-        if (!params.getUseForkId() &&
-                ((vPeerVersionMessage.localServices & VersionMessage.NODE_BITCOIN_CASH) == VersionMessage.NODE_BITCOIN_CASH)) {
+
+	bool bchDisabled = (vPeerVersionMessage.localServices & VersionMessage.NODE_BITCOIN_CASH) == VersionMessage.NODE_BITCOIN_CASH;
+        if (!params.getUseForkId() && bchDisabled) {
             log.info("{}: Peer follows an incompatible block chain.", this);
             // Shut down the channel gracefully.
             close();
@@ -746,7 +751,7 @@ public class Peer extends PeerSocketHandler {
 
     protected void processGetData(GetDataMessage getdata) {
         log.info("{}: Received getdata message: {}", getAddress(), getdata.toString());
-        ArrayList<Message> items = new ArrayList<Message>();
+        ArrayList<Message> items = new ArrayList<>();
         for (ListenerRegistration<GetDataEventListener> registration : getDataEventListeners) {
             if (registration.executor != Threading.SAME_THREAD) continue;
             List<Message> listenerItems = registration.listener.getData(this, getdata);
@@ -875,7 +880,7 @@ public class Peer extends PeerSocketHandler {
         TransactionConfidence.ConfidenceType txConfidence = tx.getConfidence().getConfidenceType();
         Preconditions.checkArgument(txConfidence != TransactionConfidence.ConfidenceType.BUILDING);
         log.info("{}: Downloading dependencies of {}", getAddress(), tx.getHashAsString());
-        final LinkedList<Transaction> results = new LinkedList<Transaction>();
+        final LinkedList<Transaction> results = new LinkedList<>();
         // future will be invoked when the entire dependency tree has been walked and the results compiled.
         final ListenableFuture<Object> future = downloadDependenciesInternal(vDownloadTxDependencyDepth, 0, tx,
                 new Object(), results);
@@ -905,7 +910,7 @@ public class Peer extends PeerSocketHandler {
         // or depends on a no-fee transaction.
 
         // We may end up requesting transactions that we've already downloaded and thrown away here.
-        Set<Sha256Hash> needToRequest = new CopyOnWriteArraySet<Sha256Hash>();
+        Set<Sha256Hash> needToRequest = new CopyOnWriteArraySet<>();
         for (TransactionInput input : tx.getInputs()) {
             // There may be multiple inputs that connect to the same transaction.
             needToRequest.add(input.getOutpoint().getHash());
@@ -1088,7 +1093,7 @@ public class Peer extends PeerSocketHandler {
                     // that the new filter is now in use (which we have to simulate with a ping/pong), and then we can
                     // safely restart the chain download with the new filter that contains a new set of lookahead keys.
                     log.info("Bloom filter exhausted whilst processing block {}, discarding", m.getHash());
-                    awaitingFreshFilter = new LinkedList<Sha256Hash>();
+                    awaitingFreshFilter = new LinkedList<>();
                     awaitingFreshFilter.add(m.getHash());
                     awaitingFreshFilter.addAll(blockChain.drainOrphanBlocks());
                     return;   // Chain download process is restarted via a call to setBloomFilter.
@@ -1176,8 +1181,8 @@ public class Peer extends PeerSocketHandler {
         List<InventoryItem> items = inv.getItems();
 
         // Separate out the blocks and transactions, we'll handle them differently
-        List<InventoryItem> transactions = new LinkedList<InventoryItem>();
-        List<InventoryItem> blocks = new LinkedList<InventoryItem>();
+        List<InventoryItem> transactions = new LinkedList<>();
+        List<InventoryItem> blocks = new LinkedList<>();
 
         for (InventoryItem item : items) {
             switch (item.type) {
@@ -1433,8 +1438,7 @@ public class Peer extends PeerSocketHandler {
         // headers and then request the blocks from that point onwards. "getheaders" does not send us an inv, it just
         // sends us the data we requested in a "headers" message.
 
-        // TODO: Block locators should be abstracted out rather than special cased here.
-        List<Sha256Hash> blockLocator = new ArrayList<Sha256Hash>(51);
+        BlockLocator blockLocator = new BlockLocator();
         // For now we don't do the exponential thinning as suggested here:
         //
         //   https://en.bitcoin.it/wiki/Protocol_specification#getblocks
@@ -1458,7 +1462,7 @@ public class Peer extends PeerSocketHandler {
                     this, toHash, chainHead.getHeader().getHashAsString());
         StoredBlock cursor = chainHead;
         for (int i = 100; cursor != null && i > 0; i--) {
-            blockLocator.add(cursor.getHeader().getHash());
+            blockLocator = blockLocator.add(cursor.getHeader().getHash());
             try {
                 cursor = cursor.getPrev(store);
             } catch (BlockStoreException e) {
@@ -1468,7 +1472,7 @@ public class Peer extends PeerSocketHandler {
         }
         // Only add the locator if we didn't already do so. If the chain is < 50 blocks we already reached it.
         if (cursor != null)
-            blockLocator.add(params.getGenesisBlock().getHash());
+            blockLocator = blockLocator.add(params.getGenesisBlock().getHash());
 
         // Record that we requested this range of blocks so we can filter out duplicate requests in the event of a
         // block being solved during chain download.
@@ -1559,7 +1563,7 @@ public class Peer extends PeerSocketHandler {
     /**
      * Sends the peer a ping message and returns a future that will be invoked when the pong is received back.
      * The future provides a number which is the number of milliseconds elapsed between the ping and the pong.
-     * Once the pong is received the value returned by {@link org.bitcoinj.core.Peer#getLastPingTime()} is
+     * Once the pong is received the value returned by {@link Peer#getLastPingTime()} is
      * updated.
      * @throws ProtocolException if the peer version is too low to support measurable pings.
      */
@@ -1578,7 +1582,7 @@ public class Peer extends PeerSocketHandler {
     }
 
     /**
-     * Returns the elapsed time of the last ping/pong cycle. If {@link org.bitcoinj.core.Peer#ping()} has never
+     * Returns the elapsed time of the last ping/pong cycle. If {@link Peer#ping()} has never
      * been called or we did not hear back the "pong" message yet, returns {@link Long#MAX_VALUE}.
      */
     public long getLastPingTime() {
@@ -1593,7 +1597,7 @@ public class Peer extends PeerSocketHandler {
     }
 
     /**
-     * Returns a moving average of the last N ping/pong cycles. If {@link org.bitcoinj.core.Peer#ping()} has never
+     * Returns a moving average of the last N ping/pong cycles. If {@link Peer#ping()} has never
      * been called or we did not hear back the "pong" message yet, returns {@link Long#MAX_VALUE}. The moving average
      * window is 5 buckets.
      */
@@ -1820,7 +1824,7 @@ public class Peer extends PeerSocketHandler {
             SettableFuture<UTXOsMessage> future = SettableFuture.create();
             // Add to the list of in flight requests.
             if (getutxoFutures == null)
-                getutxoFutures = new LinkedList<SettableFuture<UTXOsMessage>>();
+                getutxoFutures = new LinkedList<>();
             getutxoFutures.add(future);
             sendMessage(new GetUTXOsMessage(params, outPoints, includeMempool));
             return future;

@@ -1,4 +1,6 @@
 /*
+ * Copyright by the original author or authors.
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -14,6 +16,8 @@
 
 package org.bitcoinj.core;
 
+import org.bitcoinj.utils.ContextPropagatingThreadFactory;
+import org.bitcoinj.wallet.SendRequest;
 import org.slf4j.*;
 
 import static com.google.common.base.Preconditions.*;
@@ -25,7 +29,6 @@ import static com.google.common.base.Preconditions.*;
 // TODO: Move Threading.USER_THREAD to here and leave behind just a source code stub. Allow different instantiations of the library to use different user threads.
 // TODO: Keep a URI to where library internal data files can be found, to abstract over the lack of JAR files on Android.
 // TODO: Stash anything else that resembles global library configuration in here and use it to clean up the rest of the API without breaking people.
-// TODO: Move the TorClient into Context, so different parts of the library can read data over Tor without having to request it directly. (or maybe a general socket factory??)
 
 /**
  * <p>The Context object holds various objects and pieces of configuration that are scoped to a specific instantiation of
@@ -41,11 +44,13 @@ import static com.google.common.base.Preconditions.*;
 public class Context {
     private static final Logger log = LoggerFactory.getLogger(Context.class);
 
-    private TxConfidenceTable confidenceTable;
-    private NetworkParameters params;
-    private int eventHorizon = 100;
-    private boolean ensureMinRequiredFee = true;
-    private Coin feePerKb = Transaction.DEFAULT_TX_FEE;
+    public static final int DEFAULT_EVENT_HORIZON = 100;
+
+    final private TxConfidenceTable confidenceTable;
+    final private NetworkParameters params;
+    final private int eventHorizon;
+    final private boolean ensureMinRequiredFee;
+    final private Coin feePerKb;
 
     /**
      * Creates a new context object. For now, this will be done for you by the framework. Eventually you will be
@@ -54,13 +59,7 @@ public class Context {
      * @param params The network parameters that will be associated with this context.
      */
     public Context(NetworkParameters params) {
-        log.info("Creating bitcoinj {} context.", VersionMessage.BITCOINJ_VERSION);
-        this.confidenceTable = new TxConfidenceTable();
-        this.params = params;
-        this.feePerKb = params.getDefaultTxFee();
-        lastConstructed = this;
-        // We may already have a context in our TLS slot. This can happen a lot during unit tests, so just ignore it.
-        slot.set(this);
+	this(params, DEFAULT_EVENT_HORIZON, params.getDefaultTxFee(), true);
     }
 
     /**
@@ -72,15 +71,19 @@ public class Context {
      * @param ensureMinRequiredFee Whether to ensure the minimum required fee by default when completing transactions. For details, see {@link org.bitcoinj.wallet.SendRequest#ensureMinRequiredFee}.
      */
     public Context(NetworkParameters params, int eventHorizon, Coin feePerKb, boolean ensureMinRequiredFee) {
-        this(params);
+        log.info("Creating bitcoinj {} context.", VersionMessage.BITCOINJ_VERSION);
+        this.confidenceTable = new TxConfidenceTable();
+        this.params = params;
         this.eventHorizon = eventHorizon;
-        this.feePerKb = feePerKb;
         this.ensureMinRequiredFee = ensureMinRequiredFee;
+        this.feePerKb = feePerKb;
+        lastConstructed = this;
+        slot.set(this);
     }
 
     private static volatile Context lastConstructed;
     private static boolean isStrictMode;
-    private static final ThreadLocal<Context> slot = new ThreadLocal<Context>();
+    private static final ThreadLocal<Context> slot = new ThreadLocal<>();
 
     /**
      * Returns the current context that is associated with the <b>calling thread</b>. BitcoinJ is an API that has thread
@@ -117,7 +120,7 @@ public class Context {
     }
 
     /**
-     * Require that new threads use {@link #propagate(Context)} or {@link org.bitcoinj.utils.ContextPropagatingThreadFactory},
+     * Require that new threads use {@link #propagate(Context)} or {@link ContextPropagatingThreadFactory},
      * rather than using a heuristic for the desired context.
      */
     public static void enableStrictMode() {
@@ -143,7 +146,7 @@ public class Context {
      * Sets the given context as the current thread context. You should use this if you create your own threads that
      * want to create core BitcoinJ objects. Generally, if a class can accept a Context in its constructor and might
      * be used (even indirectly) by a thread, you will want to call this first. Your task may be simplified by using
-     * a {@link org.bitcoinj.utils.ContextPropagatingThreadFactory}.
+     * a {@link ContextPropagatingThreadFactory}.
      */
     public static void propagate(Context context) {
         slot.set(checkNotNull(context));
@@ -160,7 +163,7 @@ public class Context {
     }
 
     /**
-     * Returns the {@link org.bitcoinj.core.NetworkParameters} specified when this context was (auto) created. The
+     * Returns the {@link NetworkParameters} specified when this context was (auto) created. The
      * network parameters defines various hard coded constants for a specific instance of a Bitcoin network, such as
      * main net, testnet, etc.
      */

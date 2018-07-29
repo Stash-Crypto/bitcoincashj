@@ -347,7 +347,11 @@ public class CashAddress {
             hashByteArray[i] = (byte) hash[i];
         }
 
-        return new Address(networkParameters, versionByte == 1? networkParameters.p2shHeader : networkParameters.addressHeader, hashByteArray);
+        if (versionByte == 1)
+            return new Address(networkParameters, networkParameters.p2shHeader, hashByteArray);
+        else
+            return new Address(networkParameters, networkParameters.addressHeader, hashByteArray);
+
     }
 
     public static void main(String[] args) {

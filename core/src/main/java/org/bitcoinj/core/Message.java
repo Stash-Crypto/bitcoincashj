@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
 import static com.google.common.base.Preconditions.checkState;
@@ -135,7 +136,7 @@ public abstract class Message {
 
     /**
      * <p>To be called before any change of internal values including any setters. This ensures any cached byte array is
-     * removed.<p/>
+     * removed.</p>
      * <p>Child messages of this object(e.g. Transactions belonging to a Block) will not have their internal byte caches
      * invalidated unless they are also modified internally.</p>
      */
@@ -185,19 +186,20 @@ public abstract class Message {
     }
 
     /**
-     * Serialize this message to a byte array that conforms to the bitcoin wire protocol.
-     * <br/>
-     * This method may return the original byte array used to construct this message if the
-     * following conditions are met:
+     * <p>Serialize this message to a byte array that conforms to the bitcoin wire protocol.</p>
+     *
+     * <p>This method may return the original byte array used to construct this message if the
+     * following conditions are met:</p>
+     *
      * <ol>
      * <li>1) The message was parsed from a byte array with parseRetain = true</li>
      * <li>2) The message has not been modified</li>
      * <li>3) The array had an offset of 0 and no surplus bytes</li>
      * </ol>
      *
-     * If condition 3 is not met then an copy of the relevant portion of the array will be returned.
+     * <p>If condition 3 is not met then an copy of the relevant portion of the array will be returned.
      * Otherwise a full serialize will occur. For this reason you should only use this API if you can guarantee you
-     * will treat the resulting array as read only.
+     * will treat the resulting array as read only.</p>
      *
      * @return a byte array owned by this object, do NOT mutate it.
      */
@@ -327,7 +329,7 @@ public abstract class Message {
     }
 
     protected byte[] readBytes(int length) throws ProtocolException {
-        if (length > MAX_SIZE) {
+        if ((length > MAX_SIZE) || (cursor + length > payload.length)) {
             throw new ProtocolException("Claimed value length too large: " + length);
         }
         try {
@@ -347,7 +349,7 @@ public abstract class Message {
 
     protected String readStr() throws ProtocolException {
         long length = readVarInt();
-        return length == 0 ? "" : Utils.toString(readBytes((int) length), "UTF-8"); // optimization for empty strings
+        return length == 0 ? "" : new String(readBytes((int) length), StandardCharsets.UTF_8); // optimization for empty strings
     }
 
     protected Sha256Hash readHash() throws ProtocolException {
@@ -368,7 +370,7 @@ public abstract class Message {
     /**
      * Set the serializer for this message when deserialized by Java.
      */
-    private void readObject(java.io.ObjectInputStream in)
+    private void readObject(ObjectInputStream in)
         throws IOException, ClassNotFoundException {
         in.defaultReadObject();
         if (null != params) {

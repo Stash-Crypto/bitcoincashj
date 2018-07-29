@@ -16,6 +16,8 @@
 
 package org.bitcoinj.utils;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import org.bitcoinj.core.Block;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.ProtocolException;
@@ -39,43 +41,59 @@ import java.util.NoSuchElementException;
  * <p>In order to comply with {@link Iterator}, this class swallows a lot of {@link IOException}s, which may result in a few
  * blocks being missed followed by a huge set of orphan blocks.</p>
  * 
- * <p>To blindly import all files which can be found in Bitcoin Core (version >= 0.8) datadir automatically,
- * try this code fragment:<br>
- * BlockFileLoader loader = new BlockFileLoader(BlockFileLoader.getReferenceClientBlockFileList());<br>
- * for (Block block : loader) {<br>
- * &nbsp;&nbsp;try { chain.add(block); } catch (Exception e) { }<br>
+ * <p>To blindly import all files which can be found in Bitcoin Core (version 0.8 or higher) datadir automatically,
+ * try this code fragment:
+ * {@code
+ * BlockFileLoader loader = new BlockFileLoader(BlockFileLoader.getReferenceClientBlockFileList());
+ * for (Block block : loader) {
+ * try { chain.add(block); } catch (Exception e) { }
+ * }
  * }</p>
  */
 public class BlockFileLoader implements Iterable<Block>, Iterator<Block> {
     /**
      * Gets the list of files which contain blocks from Bitcoin Core.
      */
-    public static List<File> getReferenceClientBlockFileList() {
-        String defaultDataDir;
-        String OS = System.getProperty("os.name").toLowerCase();
-        if (OS.indexOf("win") >= 0) {
-            defaultDataDir = System.getenv("APPDATA") + "\\.bitcoin\\blocks\\";
-        } else if (OS.indexOf("mac") >= 0 || (OS.indexOf("darwin") >= 0)) {
-            defaultDataDir = System.getProperty("user.home") + "/Library/Application Support/Bitcoin/blocks/";
-        } else {
-            defaultDataDir = System.getProperty("user.home") + "/.bitcoin/blocks/";
-        }
-        
-        List<File> list = new LinkedList<File>();
+    public static List<File> getReferenceClientBlockFileList(File blocksDir) {
+        checkArgument(blocksDir.isDirectory(), "%s is not a directory", blocksDir);
+        List<File> list = new LinkedList<>();
         for (int i = 0; true; i++) {
-            File file = new File(defaultDataDir + String.format(Locale.US, "blk%05d.dat", i));
+            File file = new File(blocksDir, String.format(Locale.US, "blk%05d.dat", i));
             if (!file.exists())
                 break;
             list.add(file);
         }
         return list;
     }
-    
+
+    public static List<File> getReferenceClientBlockFileList() {
+        return getReferenceClientBlockFileList(defaultBlocksDir());
+    }
+
+    public static File defaultBlocksDir() {
+        final File defaultBlocksDir;
+        if (Utils.isWindows()) {
+            defaultBlocksDir = new File(System.getenv("APPDATA") + "\\.bitcoin\\blocks\\");
+        } else if (Utils.isMac()) {
+            defaultBlocksDir = new File(System.getProperty("user.home") + "/Library/Application Support/Bitcoin/blocks/");
+        } else if (Utils.isLinux()) {
+            defaultBlocksDir = new File(System.getProperty("user.home") + "/.bitcoin/blocks/");
+        } else {
+            throw new RuntimeException("Unsupported system");
+        }
+        return defaultBlocksDir;
+    }
+
     private Iterator<File> fileIt;
+    private File file = null;
     private FileInputStream currentFileStream = null;
     private Block nextBlock = null;
     private NetworkParameters params;
-    
+
+    public BlockFileLoader(NetworkParameters params, File blocksDir) {
+        this(params, getReferenceClientBlockFileList(blocksDir));
+    }
+
     public BlockFileLoader(NetworkParameters params, List<File> files) {
         fileIt = files.iterator();
         this.params = params;
@@ -119,8 +137,9 @@ public class BlockFileLoader implements Iterable<Block>, Iterator<Block> {
                     currentFileStream = null;
                     return;
                 }
+                file = fileIt.next();
                 try {
-                    currentFileStream = new FileInputStream(fileIt.next());
+                    currentFileStream = new FileInputStream(file);
                 } catch (FileNotFoundException e) {
                     currentFileStream = null;
                 }
@@ -155,6 +174,8 @@ public class BlockFileLoader implements Iterable<Block>, Iterator<Block> {
                 } catch (ProtocolException e) {
                     nextBlock = null;
                     continue;
+                } catch (Exception e) {
+                    throw new RuntimeException("unexpected problem with block in " + file, e);
                 }
                 break;
             } catch (IOException e) {

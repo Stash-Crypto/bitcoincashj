@@ -25,10 +25,13 @@ import org.bitcoinj.testing.*;
 import org.easymock.*;
 import org.junit.*;
 
+import java.io.IOException;
+import java.io.OutputStream;
 import java.math.BigInteger;
 import java.util.*;
 import static org.bitcoinj.core.Utils.HEX;
 
+import static org.bitcoinj.core.Utils.uint32ToByteStreamLE;
 import static org.easymock.EasyMock.*;
 import static org.junit.Assert.*;
 
@@ -39,15 +42,15 @@ import static org.junit.Assert.*;
  * so we make sure to cover it here as well.
  */
 public class TransactionTest {
-    private static final NetworkParameters PARAMS = UnitTestParams.get();
-    private static final Address ADDRESS = new ECKey().toAddress(PARAMS);
+    private static final NetworkParameters UNITTEST = UnitTestParams.get();
+    private static final Address ADDRESS = LegacyAddress.fromKey(UNITTEST, new ECKey());
 
     private Transaction tx;
 
     @Before
     public void setUp() throws Exception {
-        Context context = new Context(PARAMS);
-        tx = FakeTxBuilder.createFakeTx(PARAMS);
+        Context context = new Context(UNITTEST);
+        tx = FakeTxBuilder.createFakeTx(UNITTEST);
     }
 
     @Test(expected = VerificationException.EmptyInputsOrOutputs.class)
@@ -84,7 +87,7 @@ public class TransactionTest {
 
     @Test(expected = VerificationException.ExcessiveValue.class)
     public void exceedsMaxMoney2() throws Exception {
-        Coin half = PARAMS.getMaxMoney().divide(2).add(Coin.SATOSHI);
+        Coin half = UNITTEST.getMaxMoney().divide(2).add(Coin.SATOSHI);
         tx.getOutput(0).setValue(half);
         tx.addOutput(half, ADDRESS);
         tx.verify();
@@ -119,7 +122,7 @@ public class TransactionTest {
         BlockChain mockBlockChain = createMock(BlockChain.class);
         EasyMock.expect(mockBlockChain.estimateBlockTime(TEST_LOCK_TIME)).andReturn(now);
 
-        Transaction tx = FakeTxBuilder.createFakeTx(PARAMS);
+        Transaction tx = FakeTxBuilder.createFakeTx(UNITTEST);
         tx.setLockTime(TEST_LOCK_TIME); // less than five hundred million
 
         replay(mockBlockChain);
@@ -129,12 +132,12 @@ public class TransactionTest {
 
     @Test
     public void testOptimalEncodingMessageSize() {
-        Transaction tx = new Transaction(PARAMS);
+        Transaction tx = new Transaction(UNITTEST);
 
         int length = tx.length;
 
         // add basic transaction input, check the length
-        tx.addOutput(new TransactionOutput(PARAMS, null, Coin.COIN, ADDRESS));
+        tx.addOutput(new TransactionOutput(UNITTEST, null, Coin.COIN, ADDRESS));
         length += getCombinedLength(tx.getOutputs());
 
         // add basic output, check the length
@@ -152,7 +155,7 @@ public class TransactionTest {
 
     @Test
     public void testIsMatureReturnsFalseIfTransactionIsCoinbaseAndConfidenceTypeIsNotEqualToBuilding() {
-        Transaction tx = FakeTxBuilder.createFakeCoinbaseTx(PARAMS);
+        Transaction tx = FakeTxBuilder.createFakeCoinbaseTx(UNITTEST);
 
         tx.getConfidence().setConfidenceType(ConfidenceType.UNKNOWN);
         assertEquals(tx.isMature(), false);
@@ -171,16 +174,31 @@ public class TransactionTest {
         ECKey from = new ECKey(), to = new ECKey(), incorrect = new ECKey();
         Script outputScript = ScriptBuilder.createCLTVPaymentChannelOutput(time, from, to);
 
-        Transaction tx = new Transaction(PARAMS);
-        tx.addInput(new TransactionInput(PARAMS, tx, new byte[] {}));
+        Transaction tx = new Transaction(UNITTEST);
+        tx.addInput(new TransactionInput(UNITTEST, tx, new byte[] {}));
         tx.getInput(0).setSequenceNumber(0);
         tx.setLockTime(time.subtract(BigInteger.ONE).longValue());
         TransactionSignature fromSig =
-                tx.calculateSignature(0, from, outputScript, Transaction.SigHash.SINGLE, false);
+                tx.calculateSignature(
+                        0,
+                        from,
+                        outputScript,
+                        Transaction.SigHash.SINGLE,
+                        false);
         TransactionSignature toSig =
-                tx.calculateSignature(0, to, outputScript, Transaction.SigHash.SINGLE, false);
+                tx.calculateSignature(
+                        0,
+                        to,
+                        outputScript,
+                        Transaction.SigHash.SINGLE,
+                        false);
         TransactionSignature incorrectSig =
-                tx.calculateSignature(0, incorrect, outputScript, Transaction.SigHash.SINGLE, false);
+                tx.calculateSignature(
+                        0,
+                        incorrect,
+                        outputScript,
+                        Transaction.SigHash.SINGLE,
+                        false);
         Script scriptSig =
                 ScriptBuilder.createCLTVPaymentChannelInput(fromSig, toSig);
         Script refundSig =
@@ -218,14 +236,24 @@ public class TransactionTest {
         ECKey from = new ECKey(), to = new ECKey(), incorrect = new ECKey();
         Script outputScript = ScriptBuilder.createCLTVPaymentChannelOutput(time, from, to);
 
-        Transaction tx = new Transaction(PARAMS);
-        tx.addInput(new TransactionInput(PARAMS, tx, new byte[] {}));
+        Transaction tx = new Transaction(UNITTEST);
+        tx.addInput(new TransactionInput(UNITTEST, tx, new byte[] {}));
         tx.getInput(0).setSequenceNumber(0);
         tx.setLockTime(time.add(BigInteger.ONE).longValue());
         TransactionSignature fromSig =
-                tx.calculateSignature(0, from, outputScript, Transaction.SigHash.SINGLE, false);
+                tx.calculateSignature(
+                        0,
+                        from,
+                        outputScript,
+                        Transaction.SigHash.SINGLE,
+                        false);
         TransactionSignature incorrectSig =
-                tx.calculateSignature(0, incorrect, outputScript, Transaction.SigHash.SINGLE, false);
+                tx.calculateSignature(
+                        0,
+                        incorrect,
+                        outputScript,
+                        Transaction.SigHash.SINGLE,
+                        false);
         Script scriptSig =
                 ScriptBuilder.createCLTVPaymentChannelRefund(fromSig);
         Script invalidScriptSig =
@@ -245,8 +273,41 @@ public class TransactionTest {
     }
 
     @Test
+    public void witnessTransaction() {
+        String hex = null;
+        String hex2 = null;
+        Transaction tx = null;
+
+        // Roundtrip without witness
+        hex = "0100000003362c10b042d48378b428d60c5c98d8b8aca7a03e1a2ca1048bfd469934bbda95010000008b483045022046c8bc9fb0e063e2fc8c6b1084afe6370461c16cbf67987d97df87827917d42d022100c807fa0ab95945a6e74c59838cc5f9e850714d8850cec4db1e7f3bcf71d5f5ef0141044450af01b4cc0d45207bddfb47911744d01f768d23686e9ac784162a5b3a15bc01e6653310bdd695d8c35d22e9bb457563f8de116ecafea27a0ec831e4a3e9feffffffffc19529a54ae15c67526cc5e20e535973c2d56ef35ff51bace5444388331c4813000000008b48304502201738185959373f04cc73dbbb1d061623d51dc40aac0220df56dabb9b80b72f49022100a7f76bde06369917c214ee2179e583fefb63c95bf876eb54d05dfdf0721ed772014104e6aa2cf108e1c650e12d8dd7ec0a36e478dad5a5d180585d25c30eb7c88c3df0c6f5fd41b3e70b019b777abd02d319bf724de184001b3d014cb740cb83ed21a6ffffffffbaae89b5d2e3ca78fd3f13cf0058784e7c089fb56e1e596d70adcfa486603967010000008b483045022055efbaddb4c67c1f1a46464c8f770aab03d6b513779ad48735d16d4c5b9907c2022100f469d50a5e5556fc2c932645f6927ac416aa65bc83d58b888b82c3220e1f0b73014104194b3f8aa08b96cae19b14bd6c32a92364bea3051cb9f018b03e3f09a57208ff058f4b41ebf96b9911066aef3be22391ac59175257af0984d1432acb8f2aefcaffffffff0340420f00000000001976a914c0fbb13eb10b57daa78b47660a4ffb79c29e2e6b88ac204e0000000000001976a9142cae94ffdc05f8214ccb2b697861c9c07e3948ee88ac1c2e0100000000001976a9146e03561cd4d6033456cc9036d409d2bf82721e9888ac00000000";
+        tx = new Transaction(NetworkParameters.fromID(NetworkParameters.ID_MAINNET), HEX.decode(hex));
+        assertFalse(tx.hasWitnesses());
+        assertEquals(3, tx.getInputs().size());
+        for (TransactionInput in : tx.getInputs())
+            assertFalse(in.hasWitness());
+        assertEquals(3, tx.getOutputs().size());
+        hex2 = HEX.encode(tx.bitcoinSerialize());
+        assertEquals(hex, hex2);
+        assertEquals("Uncorrect hash", "38d4cfeb57d6685753b7a3b3534c3cb576c34ca7344cd4582f9613ebf0c2b02a",
+                tx.getHash().toString());
+
+        // Roundtrip with witness
+        hex = "0100000000010213206299feb17742091c3cb2ab45faa3aa87922d3c030cafb3f798850a2722bf0000000000feffffffa12f2424b9599898a1d30f06e1ce55eba7fabfeee82ae9356f07375806632ff3010000006b483045022100fcc8cf3014248e1a0d6dcddf03e80f7e591605ad0dbace27d2c0d87274f8cd66022053fcfff64f35f22a14deb657ac57f110084fb07bb917c3b42e7d033c54c7717b012102b9e4dcc33c9cc9cb5f42b96dddb3b475b067f3e21125f79e10c853e5ca8fba31feffffff02206f9800000000001976a9144841b9874d913c430048c78a7b18baebdbea440588ac8096980000000000160014e4873ef43eac347471dd94bc899c51b395a509a502483045022100dd8250f8b5c2035d8feefae530b10862a63030590a851183cb61b3672eb4f26e022057fe7bc8593f05416c185d829b574290fb8706423451ebd0a0ae50c276b87b43012102179862f40b85fa43487500f1d6b13c864b5eb0a83999738db0f7a6b91b2ec64f00db080000";
+        tx = new Transaction(NetworkParameters.fromID(NetworkParameters.ID_MAINNET), HEX.decode(hex));
+        assertTrue(tx.hasWitnesses());
+        assertEquals(2, tx.getInputs().size());
+        assertTrue(tx.getInput(0).hasWitness());
+        assertFalse(tx.getInput(1).hasWitness());
+        assertEquals(2, tx.getOutputs().size());
+        hex2 = HEX.encode(tx.bitcoinSerialize());
+        assertEquals(hex, hex2);
+        assertEquals("Uncorrect hash", "99e7484eafb6e01622c395c8cae7cb9f8822aab6ba993696b39df8b60b0f4b11",
+                tx.getHash().toString());
+    }
+
+    @Test
     public void testToStringWhenLockTimeIsSpecifiedInBlockHeight() {
-        Transaction tx = FakeTxBuilder.createFakeTx(PARAMS);
+        Transaction tx = FakeTxBuilder.createFakeTx(UNITTEST);
         TransactionInput input = tx.getInput(0);
         input.setSequenceNumber(42);
 
@@ -270,11 +331,11 @@ public class TransactionTest {
 
     @Test
     public void testToStringWhenIteratingOverAnInputCatchesAnException() {
-        Transaction tx = FakeTxBuilder.createFakeTx(PARAMS);
-        TransactionInput ti = new TransactionInput(PARAMS, tx, new byte[0]) {
+        Transaction tx = FakeTxBuilder.createFakeTx(UNITTEST);
+        TransactionInput ti = new TransactionInput(UNITTEST, tx, new byte[0]) {
             @Override
             public Script getScriptSig() throws ScriptException {
-                throw new ScriptException("");
+                throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "");
             }
         };
 
@@ -284,22 +345,22 @@ public class TransactionTest {
 
     @Test
     public void testToStringWhenThereAreZeroInputs() {
-        Transaction tx = new Transaction(PARAMS);
+        Transaction tx = new Transaction(UNITTEST);
         assertEquals(tx.toString().contains("No inputs!"), true);
     }
 
     @Test
     public void testTheTXByHeightComparator() {
-        Transaction tx1 = FakeTxBuilder.createFakeTx(PARAMS);
+        Transaction tx1 = FakeTxBuilder.createFakeTx(UNITTEST);
         tx1.getConfidence().setAppearedAtChainHeight(1);
 
-        Transaction tx2 = FakeTxBuilder.createFakeTx(PARAMS);
+        Transaction tx2 = FakeTxBuilder.createFakeTx(UNITTEST);
         tx2.getConfidence().setAppearedAtChainHeight(2);
 
-        Transaction tx3 = FakeTxBuilder.createFakeTx(PARAMS);
+        Transaction tx3 = FakeTxBuilder.createFakeTx(UNITTEST);
         tx3.getConfidence().setAppearedAtChainHeight(3);
 
-        SortedSet<Transaction> set = new TreeSet<Transaction>(Transaction.SORT_TX_BY_HEIGHT);
+        SortedSet<Transaction> set = new TreeSet<>(Transaction.SORT_TX_BY_HEIGHT);
         set.add(tx2);
         set.add(tx1);
         set.add(tx3);
@@ -319,10 +380,10 @@ public class TransactionTest {
     @Test(expected = ScriptException.class)
     public void testAddSignedInputThrowsExceptionWhenScriptIsNotToRawPubKeyAndIsNotToAddress() {
         ECKey key = new ECKey();
-        Address addr = key.toAddress(PARAMS);
-        Transaction fakeTx = FakeTxBuilder.createFakeTx(PARAMS, Coin.COIN, addr);
+        Address addr = LegacyAddress.fromKey(UNITTEST, key);
+        Transaction fakeTx = FakeTxBuilder.createFakeTx(UNITTEST, Coin.COIN, addr);
 
-        Transaction tx = new Transaction(PARAMS);
+        Transaction tx = new Transaction(UNITTEST);
         tx.addOutput(fakeTx.getOutput(0));
 
         Script script = ScriptBuilder.createOpReturnScript(new byte[0]);
@@ -332,7 +393,7 @@ public class TransactionTest {
 
     @Test
     public void testPrioSizeCalc() throws Exception {
-        Transaction tx1 = FakeTxBuilder.createFakeTx(PARAMS, Coin.COIN, ADDRESS);
+        Transaction tx1 = FakeTxBuilder.createFakeTx(UNITTEST, Coin.COIN, ADDRESS);
         int size1 = tx1.getMessageSize();
         int size2 = tx1.getMessageSizeForPriorityCalc();
         assertEquals(113, size1 - size2);
@@ -347,9 +408,10 @@ public class TransactionTest {
     @Test
     public void testCoinbaseHeightCheck() throws VerificationException {
         // Coinbase transaction from block 300,000
-        final byte[] transactionBytes = HEX.decode("01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff4803e09304062f503253482f0403c86d53087ceca141295a00002e522cfabe6d6d7561cf262313da1144026c8f7a43e3899c44f6145f39a36507d36679a8b7006104000000000000000000000001c8704095000000001976a91480ad90d403581fa3bf46086a91b2d9d4125db6c188ac00000000");
+        final byte[] transactionBytes = HEX.decode(
+                "01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff4803e09304062f503253482f0403c86d53087ceca141295a00002e522cfabe6d6d7561cf262313da1144026c8f7a43e3899c44f6145f39a36507d36679a8b7006104000000000000000000000001c8704095000000001976a91480ad90d403581fa3bf46086a91b2d9d4125db6c188ac00000000");
         final int height = 300000;
-        final Transaction transaction = PARAMS.getDefaultSerializer().makeTransaction(transactionBytes);
+        final Transaction transaction = UNITTEST.getDefaultSerializer().makeTransaction(transactionBytes);
         transaction.checkCoinBaseHeight(height);
     }
 
@@ -361,20 +423,16 @@ public class TransactionTest {
     public void testCoinbaseHeightCheckWithDamagedScript() throws VerificationException {
         // Coinbase transaction from block 224,430
         final byte[] transactionBytes = HEX.decode(
-            "010000000100000000000000000000000000000000000000000000000000000000"
-            + "00000000ffffffff3b03ae6c0300044bd7031a0400000000522cfabe6d6d0000"
-            + "0000000000b7b8bf0100000068692066726f6d20706f6f6c7365727665726aac"
-            + "1eeeed88ffffffff01e0587597000000001976a91421c0d001728b3feaf11551"
-            + "5b7c135e779e9f442f88ac00000000");
+            "01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff3b03ae6c0300044bd7031a0400000000522cfabe6d6d00000000000000b7b8bf0100000068692066726f6d20706f6f6c7365727665726aac1eeeed88ffffffff01e0587597000000001976a91421c0d001728b3feaf115515b7c135e779e9f442f88ac00000000");
         final int height = 224430;
-        final Transaction transaction = PARAMS.getDefaultSerializer().makeTransaction(transactionBytes);
+        final Transaction transaction = UNITTEST.getDefaultSerializer().makeTransaction(transactionBytes);
         transaction.checkCoinBaseHeight(height);
     }
 
     @Test
     public void optInFullRBF() {
         // a standard transaction as wallets would create
-        Transaction tx = FakeTxBuilder.createFakeTx(PARAMS);
+        Transaction tx = FakeTxBuilder.createFakeTx(UNITTEST);
         assertFalse(tx.isOptInFullRBF());
 
         tx.getInputs().get(0).setSequenceNumber(TransactionInput.NO_SEQUENCE - 2);
@@ -386,26 +444,36 @@ public class TransactionTest {
      */
     @Test
     public void testHashForSignatureThreadSafety() {
-        Block genesis = UnitTestParams.get().getGenesisBlock();
-        Block block1 = genesis.createNextBlock(new ECKey().toAddress(UnitTestParams.get()),
+        Block genesis = UNITTEST.getGenesisBlock();
+        Block block1 = genesis.createNextBlock(LegacyAddress.fromKey(UNITTEST, new ECKey()),
                     genesis.getTransactions().get(0).getOutput(0).getOutPointFor());
 
         final Transaction tx = block1.getTransactions().get(1);
         final String txHash = tx.getHashAsString();
-        final String txNormalizedHash = tx.hashForSignature(0, new byte[0], Transaction.SigHash.ALL.byteValue()).toString();
+        final String txNormalizedHash = tx.hashForSignature(
+                0,
+                new byte[0],
+                Transaction.SigHash.ALL.byteValue())
+                .toString();
 
         for (int i = 0; i < 100; i++) {
             // ensure the transaction object itself was not modified; if it was, the hash will change
             assertEquals(txHash, tx.getHashAsString());
             new Thread(){
                 public void run() {
-                    assertEquals(txNormalizedHash, tx.hashForSignature(0, new byte[0], Transaction.SigHash.ALL.byteValue()).toString());
+                    assertEquals(
+                            txNormalizedHash,
+                            tx.hashForSignature(
+                                    0,
+                                    new byte[0],
+                                    Transaction.SigHash.ALL.byteValue())
+                                    .toString());
                 }
             };
         }
     }
 
-    @Test
+    /*@Test
     public void testHashForSignature()
     {
         BCCMainNetParams MAIN = new BCCMainNetParams();
@@ -420,8 +488,103 @@ public class TransactionTest {
 
         Script sig = tx.getInput(0).getScriptSig();
 
-        sig.correctlySpends(tx, 0, txConnected.getOutput(1).getScriptPubKey(), txConnected.getOutput(1).getValue(), Script.ALL_VERIFY_FLAGS);
+        sig.correctlySpends(tx, 0, txConnected.getOutput(1).getScriptPubKey(), txConnected.getOutput(1).getValue(), Script.ALL_VERIFY_FLAGS);*/
 
+    public void parseTransactionWithHugeDeclaredInputsSize() throws Exception {
+        Transaction tx = new HugeDeclaredSizeTransaction(UNITTEST, true, false, false);
+        byte[] serializedTx = tx.bitcoinSerialize();
+        try {
+            new Transaction(UNITTEST, serializedTx);
+            fail("We expect ProtocolException with the fixed code and OutOfMemoryError with the buggy code, so this is weird");
+        } catch (ProtocolException e) {
+            //Expected, do nothing
+        }
+    }
 
+    @Test
+    public void parseTransactionWithHugeDeclaredOutputsSize() throws Exception {
+        Transaction tx = new HugeDeclaredSizeTransaction(UNITTEST, false, true, false);
+        byte[] serializedTx = tx.bitcoinSerialize();
+        try {
+            new Transaction(UNITTEST, serializedTx);
+            fail("We expect ProtocolException with the fixed code and OutOfMemoryError with the buggy code, so this is weird");
+        } catch (ProtocolException e) {
+            //Expected, do nothing
+        }
+    }
+
+    @Test
+    public void parseTransactionWithHugeDeclaredWitnessPushCountSize() throws Exception {
+        Transaction tx = new HugeDeclaredSizeTransaction(UNITTEST, false, false, true);
+        byte[] serializedTx = tx.bitcoinSerialize();
+        try {
+            new Transaction(UNITTEST, serializedTx);
+            fail("We expect ProtocolException with the fixed code and OutOfMemoryError with the buggy code, so this is weird");
+        } catch (ProtocolException e) {
+            //Expected, do nothing
+        }
+    }
+
+    private static class HugeDeclaredSizeTransaction extends Transaction {
+
+        private boolean hackInputsSize;
+        private boolean hackOutputsSize;
+        private boolean hackWitnessPushCountSize;
+
+        public HugeDeclaredSizeTransaction(NetworkParameters params, boolean hackInputsSize, boolean hackOutputsSize, boolean hackWitnessPushCountSize) {
+            super(params);
+            this.protocolVersion = NetworkParameters.ProtocolVersion.WITNESS_VERSION.getBitcoinProtocolVersion();
+            Transaction inputTx = new Transaction(params);
+            inputTx.addOutput(Coin.FIFTY_COINS, LegacyAddress.fromKey(params, ECKey.fromPrivate(BigInteger.valueOf(123456))));
+            this.addInput(inputTx.getOutput(0));
+            this.getInput(0).disconnect();
+            TransactionWitness witness = new TransactionWitness(1);
+            witness.setPush(0, new byte[] {0});
+            this.getInput(0).setWitness(witness);
+            Address to = LegacyAddress.fromKey(params, ECKey.fromPrivate(BigInteger.valueOf(1000)));
+            this.addOutput(Coin.COIN, to);
+
+            this.hackInputsSize = hackInputsSize;
+            this.hackOutputsSize = hackOutputsSize;
+            this.hackWitnessPushCountSize = hackWitnessPushCountSize;
+        }
+
+        @Override
+        protected void bitcoinSerializeToStream(OutputStream stream, boolean useSegwit) throws IOException {
+            // version
+            uint32ToByteStreamLE(getVersion(), stream);
+            // marker, flag
+            if (useSegwit) {
+                stream.write(0);
+                stream.write(1);
+            }
+            // txin_count, txins
+            long inputsSize = hackInputsSize ? Integer.MAX_VALUE : getInputs().size();
+            stream.write(new VarInt(inputsSize).encode());
+            for (TransactionInput in : getInputs())
+                in.bitcoinSerialize(stream);
+            // txout_count, txouts
+            long outputsSize = hackOutputsSize ? Integer.MAX_VALUE : getOutputs().size();
+            stream.write(new VarInt(outputsSize).encode());
+            for (TransactionOutput out : getOutputs())
+                out.bitcoinSerialize(stream);
+            // script_witnisses
+            if (useSegwit) {
+                for (TransactionInput in : getInputs()) {
+                    TransactionWitness witness = in.getWitness();
+                    long pushCount = hackWitnessPushCountSize ? Integer.MAX_VALUE : witness.getPushCount();
+                    stream.write(new VarInt(pushCount).encode());
+                    for (int i = 0; i < witness.getPushCount(); i++) {
+                        byte[] push = witness.getPush(i);
+                        stream.write(new VarInt(push.length).encode());
+                        stream.write(push);
+                    }
+
+                    in.getWitness().bitcoinSerializeToStream(stream);
+                }
+            }
+            // lock_time
+            uint32ToByteStreamLE(getLockTime(), stream);
+        }
     }
 }

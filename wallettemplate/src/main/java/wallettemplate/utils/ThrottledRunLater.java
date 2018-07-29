@@ -1,4 +1,6 @@
 /*
+ * Copyright by the original author or authors.
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -19,7 +21,7 @@ import javafx.application.Platform;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * A simple wrapper around {@link javafx.application.Platform#runLater(Runnable)} which will do nothing if the previous
+ * A simple wrapper around {@link Platform#runLater(Runnable)} which will do nothing if the previous
  * invocation of runLater didn't execute on the JavaFX UI thread yet. In this way you can avoid flooding
  * the event loop if you have a background thread that for whatever reason wants to update the UI very
  * frequently. Without this class you could end up bloating up memory usage and causing the UI to stutter

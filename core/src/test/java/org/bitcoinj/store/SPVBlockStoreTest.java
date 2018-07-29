@@ -23,6 +23,7 @@ import java.io.File;
 
 import org.bitcoinj.core.Address;
 import org.bitcoinj.core.ECKey;
+import org.bitcoinj.core.LegacyAddress;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.StoredBlock;
 import org.bitcoinj.params.UnitTestParams;
@@ -44,7 +45,7 @@ public class SPVBlockStoreTest {
     public void basics() throws Exception {
         SPVBlockStore store = new SPVBlockStore(UNITTEST, blockStoreFile);
 
-        Address to = new ECKey().toAddress(UNITTEST);
+        Address to = LegacyAddress.fromKey(UNITTEST, new ECKey());
         // Check the first block in a new store is the genesis block.
         StoredBlock genesis = store.getChainHead();
         assertEquals(UNITTEST.getGenesisBlock(), genesis.getHeader());
@@ -76,5 +77,42 @@ public class SPVBlockStoreTest {
         SPVBlockStore store = new SPVBlockStore(UNITTEST, blockStoreFile);
         store.close();
         store = new SPVBlockStore(UNITTEST, blockStoreFile);
+    }
+
+    @Test(expected = BlockStoreException.class)
+    public void twoStores_sequentially_butMismatchingCapacity() throws Exception {
+        SPVBlockStore store = new SPVBlockStore(UNITTEST, blockStoreFile, 10, false);
+        store.close();
+        store = new SPVBlockStore(UNITTEST, blockStoreFile, 20, false);
+    }
+
+    @Test
+    public void twoStores_sequentially_grow() throws Exception {
+        Address to = LegacyAddress.fromKey(UNITTEST, new ECKey());
+        SPVBlockStore store = new SPVBlockStore(UNITTEST, blockStoreFile, 10, true);
+        final StoredBlock block0 = store.getChainHead();
+        final StoredBlock block1 = block0.build(block0.getHeader().createNextBlock(to).cloneAsHeader());
+        store.put(block1);
+        final StoredBlock block2 = block1.build(block1.getHeader().createNextBlock(to).cloneAsHeader());
+        store.put(block2);
+        store.setChainHead(block2);
+        store.close();
+
+        store = new SPVBlockStore(UNITTEST, blockStoreFile, 20, true);
+        final StoredBlock read2 = store.getChainHead();
+        assertEquals(block2, read2);
+        final StoredBlock read1 = read2.getPrev(store);
+        assertEquals(block1, read1);
+        final StoredBlock read0 = read1.getPrev(store);
+        assertEquals(block0, read0);
+        store.close();
+        assertEquals(SPVBlockStore.getFileSize(20), blockStoreFile.length());
+    }
+
+    @Test(expected = BlockStoreException.class)
+    public void twoStores_sequentially_shrink() throws Exception {
+        SPVBlockStore store = new SPVBlockStore(UNITTEST, blockStoreFile, 20, true);
+        store.close();
+        store = new SPVBlockStore(UNITTEST, blockStoreFile, 10, true);
     }
 }

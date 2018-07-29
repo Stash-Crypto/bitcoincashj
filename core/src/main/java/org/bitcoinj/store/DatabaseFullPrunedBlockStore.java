@@ -21,6 +21,7 @@ package org.bitcoinj.store;
 import com.google.common.collect.Lists;
 import org.bitcoinj.core.*;
 import org.bitcoinj.script.Script;
+import org.bitcoinj.script.Script.ScriptType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,20 +37,17 @@ import java.util.*;
  * <p>A generic full pruned block store for a relational database.  This generic class requires
  * certain table structures for the block store.</p>
  *
- * <p>The following are the tables and field names/types that are assumed:-</p>
+ * <p>The following are the tables and field names/types that are assumed:</p>
  *
- * <p>
- * <b>setting</b> table
  * <table>
+ *     <caption><b>setting</b> table</caption>
  *     <tr><th>Field Name</th><th>Type (generic)</th></tr>
  *     <tr><td>name</td><td>string</td></tr>
  *     <tr><td>value</td><td>binary</td></tr>
  * </table>
- * </p>
  *
- * <p><br/>
- * <b>headers</b> table
  * <table>
+ *     <caption><b>headers</b> table</caption>
  *     <tr><th>Field Name</th><th>Type (generic)</th></tr>
  *     <tr><td>hash</td><td>binary</td></tr>
  *     <tr><td>chainwork</td><td>binary</td></tr>
@@ -57,22 +55,18 @@ import java.util.*;
  *     <tr><td>header</td><td>binary</td></tr>
  *     <tr><td>wasundoable</td><td>boolean</td></tr>
  * </table>
- * </p>
  *
- * <p><br/>
- * <b>undoableblocks</b> table
  * <table>
+ *     <caption><b>undoableblocks</b> table</caption>
  *     <tr><th>Field Name</th><th>Type (generic)</th></tr>
  *     <tr><td>hash</td><td>binary</td></tr>
  *     <tr><td>height</td><td>integer</td></tr>
  *     <tr><td>txoutchanges</td><td>binary</td></tr>
  *     <tr><td>transactions</td><td>binary</td></tr>
  * </table>
- * </p>
  *
- * <p><br/>
- * <b>openoutputs</b> table
  * <table>
+ *     <caption><b>openoutputs</b> table</caption>
  *     <tr><th>Field Name</th><th>Type (generic)</th></tr>
  *     <tr><td>hash</td><td>binary</td></tr>
  *     <tr><td>index</td><td>integer</td></tr>
@@ -83,8 +77,6 @@ import java.util.*;
  *     <tr><td>addresstargetable</td><td>integer</td></tr>
  *     <tr><td>coinbase</td><td>boolean</td></tr>
  * </table>
- * </p>
- *
  */
 public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockStore {
     private static final Logger log = LoggerFactory.getLogger(DatabaseFullPrunedBlockStore.class);
@@ -168,8 +160,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         this.schemaName = schemaName;
         this.username = username;
         this.password = password;
-        this.conn = new ThreadLocal<Connection>();
-        this.allConnections = new LinkedList<Connection>();
+        this.conn = new ThreadLocal<>();
+        this.allConnections = new LinkedList<>();
 
         try {
             Class.forName(getDatabaseDriverClass());
@@ -220,7 +212,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
 
     /**
      * Get the database specific error code that indicated a duplicate key error when inserting a record.
-     * <p>This is the code returned by {@link java.sql.SQLException#getSQLState()}</p>
+     * <p>This is the code returned by {@link SQLException#getSQLState()}</p>
      * @return The database duplicate error code.
      */
     protected abstract String getDuplicateKeyErrorCode();
@@ -246,7 +238,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
      * @return The SQL prepared statements.
      */
     protected List<String> getCompatibilitySQL() {
-        List<String> sqlStatements = new ArrayList<String>();
+        List<String> sqlStatements = new ArrayList<>();
         sqlStatements.add(SELECT_COMPATIBILITY_COINBASE_SQL);
         return sqlStatements;
     }
@@ -255,7 +247,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
      * Get the SQL to select the transaction outputs for a given address.
      * @return The SQL prepared statement.
      */
-    protected String getTrasactionOutputSelectSQL() {
+    protected String getTransactionOutputSelectSQL() {
         return SELECT_TRANSACTION_OUTPUTS_SQL;
     }
 
@@ -264,7 +256,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
      * @return The SQL drop statements.
      */
     protected List<String> getDropTablesSQL() {
-        List<String> sqlStatements = new ArrayList<String>();
+        List<String> sqlStatements = new ArrayList<>();
         sqlStatements.add(DROP_SETTINGS_TABLE);
         sqlStatements.add(DROP_HEADERS_TABLE);
         sqlStatements.add(DROP_UNDOABLE_TABLE);
@@ -554,7 +546,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     /**
-     * Create a new store for the given {@link org.bitcoinj.core.NetworkParameters}.
+     * Create a new store for the given {@link NetworkParameters}.
      * @param params The network.
      * @throws BlockStoreException If the store couldn't be created.
      */
@@ -606,7 +598,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
         this.verifiedChainHeadBlock = get(hash);
         this.verifiedChainHeadHash = hash;
         if (this.verifiedChainHeadBlock == null) {
-            throw new BlockStoreException("corrupt databse block store - verified head block not found");
+            throw new BlockStoreException("corrupt database block store - verified head block not found");
         }
     }
 
@@ -668,10 +660,7 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
                 txOutChanges = bos.toByteArray();
             } else {
                 int numTxn = undoableBlock.getTransactions().size();
-                bos.write(0xFF & numTxn);
-                bos.write(0xFF & (numTxn >> 8));
-                bos.write(0xFF & (numTxn >> 16));
-                bos.write(0xFF & (numTxn >> 24));
+                Utils.uint32ToByteStreamLE(numTxn, bos);
                 for (Transaction tx : undoableBlock.getTransactions())
                     tx.bitcoinSerialize(bos);
                 transactions = bos.toByteArray();
@@ -805,12 +794,9 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             byte[] transactions = results.getBytes(2);
             StoredUndoableBlock block;
             if (txOutChanges == null) {
-                int offset = 0;
-                int numTxn = ((transactions[offset++] & 0xFF)) |
-                        ((transactions[offset++] & 0xFF) << 8) |
-                        ((transactions[offset++] & 0xFF) << 16) |
-                        ((transactions[offset++] & 0xFF) << 24);
-                List<Transaction> transactionList = new LinkedList<Transaction>();
+                int numTxn = (int) Utils.readUint32(transactions, 0);
+                int offset = 4;
+                List<Transaction> transactionList = new LinkedList<>();
                 for (int i = 0; i < numTxn; i++) {
                     Transaction tx = params.getDefaultSerializer().makeTransaction(transactions, offset);
                     transactionList.add(tx);
@@ -965,7 +951,8 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
             s.setLong(4, out.getValue().value);
             s.setBytes(5, out.getScript().getProgram());
             s.setString(6, out.getAddress());
-            s.setInt(7, out.getScript().getScriptType().ordinal());
+            ScriptType scriptType = out.getScript().getScriptType();
+            s.setInt(7, scriptType != null ? scriptType.id : 0);
             s.setBoolean(8, out.isCoinbase());
             s.executeUpdate();
             s.close();
@@ -1119,10 +1106,10 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     /**
      * Calculate the balance for a coinbase, to-address, or p2sh address.
      *
-     * <p>The balance {@link org.bitcoinj.store.DatabaseFullPrunedBlockStore#getBalanceSelectSQL()} returns
+     * <p>The balance {@link DatabaseFullPrunedBlockStore#getBalanceSelectSQL()} returns
      * the balance (summed) as an number, then use calculateClientSide=false</p>
      *
-     * <p>The balance {@link org.bitcoinj.store.DatabaseFullPrunedBlockStore#getBalanceSelectSQL()} returns
+     * <p>The balance {@link DatabaseFullPrunedBlockStore#getBalanceSelectSQL()} returns
      * the all the openoutputs as stored in the DB (binary), then use calculateClientSide=true</p>
      *
      * @param address The address to calculate the balance of
@@ -1156,14 +1143,15 @@ public abstract class DatabaseFullPrunedBlockStore implements FullPrunedBlockSto
     }
 
     @Override
-    public List<UTXO> getOpenTransactionOutputs(List<Address> addresses) throws UTXOProviderException {
+    public List<UTXO> getOpenTransactionOutputs(List<ECKey> keys) throws UTXOProviderException {
         PreparedStatement s = null;
-        List<UTXO> outputs = new ArrayList<UTXO>();
+        List<UTXO> outputs = new ArrayList<>();
         try {
             maybeConnect();
-            s = conn.get().prepareStatement(getTrasactionOutputSelectSQL());
-            for (Address address : addresses) {
-                s.setString(1, address.toString());
+            s = conn.get().prepareStatement(getTransactionOutputSelectSQL());
+            for (ECKey key : keys) {
+                // TODO switch to pubKeyHash in order to support native segwit addresses
+                s.setString(1, LegacyAddress.fromKey(params, key).toString());
                 ResultSet rs = s.executeQuery();
                 while (rs.next()) {
                     Sha256Hash hash = Sha256Hash.wrap(rs.getBytes(1));

@@ -1,6 +1,7 @@
 /*
  * Copyright 2011 Thilo Planz
  * Copyright 2014 Andreas Schildbach
+ * Copyright 2017 Nicola Atzei
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +24,7 @@ import org.junit.Test;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -181,14 +182,6 @@ public class UtilsTest {
     }
 
     @Test
-    public void testReverseDwordBytes() {
-        assertArrayEquals(new byte[]{1, 2, 3, 4, 5, 6, 7, 8}, Utils.reverseDwordBytes(new byte[]{4, 3, 2, 1, 8, 7, 6, 5}, -1));
-        assertArrayEquals(new byte[]{1, 2, 3, 4}, Utils.reverseDwordBytes(new byte[]{4, 3, 2, 1, 8, 7, 6, 5}, 4));
-        assertArrayEquals(new byte[0], Utils.reverseDwordBytes(new byte[]{4, 3, 2, 1, 8, 7, 6, 5}, 0));
-        assertArrayEquals(new byte[0], Utils.reverseDwordBytes(new byte[0], 0));
-    }
-
-    @Test
     public void testMaxOfMostFreq() throws Exception {
         assertEquals(0, Utils.maxOfMostFreq());
         assertEquals(0, Utils.maxOfMostFreq(0, 0, 1));
@@ -246,5 +239,60 @@ public class UtilsTest {
         assertEquals(Utils.readInt64(BaseEncoding.base16().decode("FFFFFFFFFFFF0000"),0), (long)Math.pow(2,48)-1);
         assertEquals(Utils.readInt64(BaseEncoding.base16().decode("FFFFFFFFFFFFFF00"),0), (long)Math.pow(2,56)-1);
         assertEquals(Utils.readInt64(BaseEncoding.base16().decode("FFFFFFFFFFFFFFFF"),0), -1L);
+
+    @Test(expected = IllegalArgumentException.class)
+    public void bigIntegerToBytes_convertNegativeNumber() {
+        BigInteger b = BigInteger.valueOf(-1);
+        Utils.bigIntegerToBytes(b, 32);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void bigIntegerToBytes_convertWithNegativeLength() {
+        BigInteger b = BigInteger.valueOf(10);
+        Utils.bigIntegerToBytes(b, -1);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void bigIntegerToBytes_convertWithZeroLength() {
+        BigInteger b = BigInteger.valueOf(10);
+        Utils.bigIntegerToBytes(b, 0);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void bigIntegerToBytes_insufficientLength() {
+        BigInteger b = BigInteger.valueOf(0b1000__0000_0000);   // base 2
+        Utils.bigIntegerToBytes(b, 1);
+    }
+
+    @Test
+    public void bigIntegerToBytes_convertZero() {
+        BigInteger b = BigInteger.valueOf(0);
+        byte[] expected = new byte[]{0b0000_0000};
+        byte[] actual = Utils.bigIntegerToBytes(b, 1);
+        assertTrue(Arrays.equals(expected, actual));
+    }
+
+    @Test
+    public void bigIntegerToBytes_singleByteSignFit() {
+        BigInteger b = BigInteger.valueOf(0b0000_1111);
+        byte[] expected = new byte[]{0b0000_1111};
+        byte[] actual = Utils.bigIntegerToBytes(b, 1);
+        assertTrue(Arrays.equals(expected, actual));
+    }
+
+    @Test
+    public void bigIntegerToBytes_paddedSingleByte() {
+        BigInteger b = BigInteger.valueOf(0b0000_1111);
+        byte[] expected = new byte[]{0, 0b0000_1111};
+        byte[] actual = Utils.bigIntegerToBytes(b, 2);
+        assertTrue(Arrays.equals(expected, actual));
+    }
+
+    @Test
+    public void bigIntegerToBytes_singleByteSignDoesNotFit() {
+        BigInteger b = BigInteger.valueOf(0b1000_0000);     // 128 (2-compl does not fit in one byte)
+        byte[] expected = new byte[]{-128};                 // -128 == 1000_0000 (compl-2)
+        byte[] actual = Utils.bigIntegerToBytes(b, 1);
+        assertTrue(Arrays.equals(expected, actual));
     }
 }

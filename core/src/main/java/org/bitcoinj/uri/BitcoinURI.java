@@ -82,8 +82,8 @@ public class BitcoinURI {
     public static final String FIELD_PAYMENT_REQUEST_URL = "r";
 
     /**
-     * URI for Bitcoin network. Use {@link AbstractBitcoinCoreParams#BITCOIN_SCHEME} if you specifically
-     * need Bitcoin, or use {@link org.bitcoinj.core.NetworkParameters#getUriScheme} to get the scheme
+     * URI for Bitcoin network. Use {@link AbstractBitcoinNetParams#BITCOIN_SCHEME} if you specifically
+     * need Bitcoin, or use {@link NetworkParameters#getUriScheme} to get the scheme
      * from network parameters.
      */
     @Deprecated
@@ -95,7 +95,7 @@ public class BitcoinURI {
     /**
      * Contains all the parameters in the order in which they were processed
      */
-    private final Map<String, Object> parameterMap = new LinkedHashMap<String, Object>();
+    private final Map<String, Object> parameterMap = new LinkedHashMap<>();
 
     /**
      * Constructs a new BitcoinURI from the given string. Can be for any network.
@@ -174,15 +174,15 @@ public class BitcoinURI {
             // Attempt to parse the addressToken as a Bitcoin address for this network
             Address address;
             try {
-                address = Address.fromBase58(params, addressToken);
+		        address = Address.fromString(params, addressToken);
             } catch (final AddressFormatException e1) {
                 try {
                     address = CashAddress.decode(scheme + ":" + addressToken);
-                    address.setType(1);
+                    // address.setType(1);
                 } catch (AddressFormatException e2) {
                     try {
                         address = CopayAddress.decode(params, addressToken);
-                        address.setType(2);
+                        // address.setType(2);
                     } catch (AddressFormatException e3) {
                         throw new BitcoinURIParseException("Bad address", e3);
                     }
@@ -264,7 +264,7 @@ public class BitcoinURI {
     }
 
     /**
-     * The Bitcoin Address from the URI, if one was present. It's possible to have Bitcoin URI's with no address if a
+     * The Bitcoin address from the URI, if one was present. It's possible to have Bitcoin URI's with no address if a
      * r= payment protocol parameter is specified, though this form is not recommended as older wallets can't understand
      * it.
      */
@@ -308,7 +308,7 @@ public class BitcoinURI {
      * all subsequent URLs are fallbacks.
      */
     public List<String> getPaymentRequestUrls() {
-        ArrayList<String> urls = new ArrayList<String>();
+        ArrayList<String> urls = new ArrayList<>();
         while (true) {
             int i = urls.size();
             String paramName = FIELD_PAYMENT_REQUEST_URL + (i > 0 ? Integer.toString(i) : "");

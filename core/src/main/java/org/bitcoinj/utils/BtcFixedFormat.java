@@ -19,8 +19,11 @@ package org.bitcoinj.utils;
 import static org.bitcoinj.core.Coin.SMALLEST_UNIT_EXPONENT;
 import static com.google.common.base.Preconditions.checkArgument;
 import com.google.common.base.Objects;
+import org.bitcoinj.core.Coin;
+
 import java.math.BigInteger;
 import java.text.DecimalFormat;
+import java.text.Format;
 import java.text.NumberFormat;
 import java.util.Locale;
 import java.util.List;
@@ -28,21 +31,22 @@ import java.util.List;
 /**
  * <p>This class, a concrete extension of {@link BtcFormat}, is distinguished in that each
  * instance formats and by-default parses all Bitcoin monetary values in units of a single
- * denomination that is specified at the time that instance is constructed.
+ * denomination that is specified at the time that instance is constructed.</p>
  *
  * <p>By default, neither currency codes nor symbols are included in formatted values as
  * output, nor recognized in parsed values as input.  The can be overridden by applying a
- * custom pattern using either the {@link BtcFormat.Builder#localizedPattern} or {@link BtcFormat.Builder#localizedPattern} methods, as described in the documentation for the {@link BtcFormat.Builder}
- * class.<ol>
+ * custom pattern using either the {@link BtcFormat.Builder#localizedPattern} or
+ * {@link BtcFormat.Builder#localizedPattern} methods, as described in the documentation for
+ * the {@link BtcFormat.Builder} class.</p>
  *
  * <p>A more detailed explanation, including examples, is in the documentation for the
  * {@link BtcFormat} class, and further information beyond that is in the documentation for the
- * {@link java.text.Format} class, from which this class descends.
+ * {@link Format} class, from which this class descends.</p>
 
- * @see          java.text.Format
- * @see          java.text.NumberFormat
- * @see          java.text.DecimalFormat
- * @see          org.bitcoinj.core.Coin
+ * @see Format
+ * @see NumberFormat
+ * @see DecimalFormat
+ * @see Coin
  */
 
 public final class BtcFixedFormat extends BtcFormat {

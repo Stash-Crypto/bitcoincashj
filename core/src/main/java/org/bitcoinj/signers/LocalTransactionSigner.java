@@ -17,11 +17,13 @@
 package org.bitcoinj.signers;
 
 import java.util.EnumSet;
-
-import org.bitcoinj.core.*;
+import org.bitcoinj.core.ECKey;
+import org.bitcoinj.core.Transaction;
+import org.bitcoinj.core.TransactionInput;
 import org.bitcoinj.crypto.DeterministicKey;
 import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.script.Script;
+import org.bitcoinj.script.ScriptException;
 import org.bitcoinj.script.Script.VerifyFlag;
 import org.bitcoinj.wallet.KeyBag;
 import org.bitcoinj.wallet.RedeemData;
@@ -29,7 +31,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * <p>{@link TransactionSigner} implementation for signing inputs using keys from provided {@link org.bitcoinj.wallet.KeyBag}.</p>
+ * <p>{@link TransactionSigner} implementation for signing inputs using keys from provided {@link KeyBag}.</p>
  * <p>This signer doesn't create input scripts for tx inputs. Instead it expects inputs to contain scripts with
  * empty sigs and replaces one of the empty sigs with calculated signature.
  * </p>
@@ -38,9 +40,9 @@ import org.slf4j.LoggerFactory;
  * {@link TransactionSigner.ProposedTransaction} object that will be also passed then to the next signer in chain. This allows other
  * signers to use correct signing key for P2SH inputs, because all the keys involved in a single P2SH address have
  * the same derivation path.</p>
- * <p>This signer always uses {@link org.bitcoinj.core.Transaction.SigHash#ALL} signing mode.</p>
+ * <p>This signer always uses {@link Transaction.SigHash#ALL} signing mode.</p>
  */
-public class LocalTransactionSigner extends StatelessTransactionSigner {
+public class LocalTransactionSigner implements TransactionSigner {
     private static final Logger log = LoggerFactory.getLogger(LocalTransactionSigner.class);
 
     /**
@@ -92,7 +94,7 @@ public class LocalTransactionSigner extends StatelessTransactionSigner {
                 propTx.keyPaths.put(scriptPubKey, (((DeterministicKey) pubKey).getPath()));
 
             ECKey key;
-            // locate private key in redeem data. For pay-to-address and pay-to-key inputs RedeemData will always contain
+            // locate private key in redeem data. For P2PKH and P2PK inputs RedeemData will always contain
             // only one key (with private bytes). For P2SH inputs RedeemData will contain multiple keys, one of which MAY
             // have private bytes
             if ((key = redeemData.getFullKey()) == null) {
@@ -101,7 +103,7 @@ public class LocalTransactionSigner extends StatelessTransactionSigner {
             }
 
             Script inputScript = txIn.getScriptSig();
-            // script here would be either a standard CHECKSIG program for pay-to-address or pay-to-pubkey inputs or
+            // script here would be either a standard CHECKSIG program for P2PKH or P2PK inputs or
             // a CHECKMULTISIG program for P2SH inputs
             byte[] script = redeemData.redeemScript.getProgram();
             try {
@@ -111,7 +113,7 @@ public class LocalTransactionSigner extends StatelessTransactionSigner {
 
                 // at this point we have incomplete inputScript with OP_0 in place of one or more signatures. We already
                 // have calculated the signature using the local key and now need to insert it in the correct place
-                // within inputScript. For pay-to-address and pay-to-key script there is only one signature and it always
+                // within inputScript. For P2PKH and P2PK script there is only one signature and it always
                 // goes first in an inputScript (sigIndex = 0). In P2SH input scripts we need to figure out our relative
                 // position relative to other signers.  Since we don't have that information at this point, and since
                 // we always run first, we have to depend on the other signers rearranging the signatures as needed.

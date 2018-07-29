@@ -19,12 +19,12 @@ package org.bitcoinj.core;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.store.FullPrunedBlockStore;
-import com.google.common.base.Charsets;
 import com.google.common.hash.HashCode;
 import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
 import com.google.common.io.BaseEncoding;
 
+import org.bitcoinj.store.SPVBlockStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,6 +37,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.charset.StandardCharsets;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.util.Arrays;
@@ -55,7 +56,7 @@ import static com.google.common.base.Preconditions.*;
  * </ol>
  *
  * <p>Checkpoints are used by the SPV {@link BlockChain} to initialize fresh
- * {@link org.bitcoinj.store.SPVBlockStore}s. They are not used by fully validating mode, which instead has a
+ * {@link SPVBlockStore}s. They are not used by fully validating mode, which instead has a
  * different concept of checkpoints that are used to hard-code the validity of blocks that violate BIP30 (duplicate
  * coinbase transactions). Those "checkpoints" can be found in NetworkParameters.</p>
  *
@@ -76,7 +77,7 @@ public class CheckpointManager {
     private static final int MAX_SIGNATURES = 256;
 
     // Map of block header time to data.
-    protected final TreeMap<Long, StoredBlock> checkpoints = new TreeMap<Long, StoredBlock>();
+    protected final TreeMap<Long, StoredBlock> checkpoints = new TreeMap<>();
 
     protected final NetworkParameters params;
     protected final Sha256Hash dataHash;
@@ -107,8 +108,12 @@ public class CheckpointManager {
     }
 
     /** Returns a checkpoints stream pointing to inside the bitcoinj JAR */
-    public static InputStream openStream(NetworkParameters params) {
-        return CheckpointManager.class.getResourceAsStream("/" + params.getId() + ".checkpoints.txt");
+    public static InputStream openStream(NetworkParameters params) {	
+        return CheckpointManager.class.getResourceAsStream("/"
+							   + params.getId()
+							   + (params.getUseForkId() ? ".cashfork" : "")
+							   + ".checkpoints"
+							   + ".txt");
     }
 
     private Sha256Hash readBinary(InputStream inputStream) throws IOException {
@@ -155,7 +160,7 @@ public class CheckpointManager {
         Hasher hasher = Hashing.sha256().newHasher();
         BufferedReader reader = null;
         try {
-            reader = new BufferedReader(new InputStreamReader(inputStream, Charsets.US_ASCII));
+            reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.US_ASCII));
             String magic = reader.readLine();
             if (!TEXTUAL_MAGIC.equals(magic))
                 throw new IOException("unexpected magic: " + magic);

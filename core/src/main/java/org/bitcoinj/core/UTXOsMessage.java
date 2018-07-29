@@ -17,6 +17,8 @@
 package org.bitcoinj.core;
 
 import com.google.common.base.Objects;
+import org.bitcoinj.net.discovery.HttpDiscovery;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
@@ -28,7 +30,7 @@ import java.util.List;
  * {@link GetUTXOsMessage} ("getutxos"). Note that both this message and the query that generates it are not
  * supported by Bitcoin Core. An implementation is available in <a href="https://github.com/bitcoinxt/bitcoinxt">Bitcoin XT</a>,
  * a patch set on top of Core. Thus if you want to use it, you must find some XT peers to connect to. This can be done
- * using a {@link org.bitcoinj.net.discovery.HttpDiscovery} class combined with an HTTP/Cartographer seed.</p>
+ * using a {@link HttpDiscovery} class combined with an HTTP/Cartographer seed.</p>
  *
  * <p>The getutxos/utxos protocol is defined in <a href="https://github.com/bitcoin/bips/blob/master/bip-0065.mediawiki">BIP 65</a>.
  * In that document you can find a discussion of the security of this protocol (briefly, there is none). Because the
@@ -67,7 +69,7 @@ public class UTXOsMessage extends Message {
             if (outputs.get(i) != null)
                 Utils.setBitLE(hits, i);
         }
-        this.outputs = new ArrayList<TransactionOutput>(outputs.size());
+        this.outputs = new ArrayList<>(outputs.size());
         for (TransactionOutput output : outputs) {
             if (output != null) this.outputs.add(output);
         }
@@ -111,7 +113,7 @@ public class UTXOsMessage extends Message {
         int numOuts = (int) readVarInt();
         if (numOuts < 0 || numOuts > InventoryMessage.MAX_INVENTORY_ITEMS)
             throw new ProtocolException("numOuts out of range: " + numOuts);
-        outputs = new ArrayList<TransactionOutput>(numOuts);
+        outputs = new ArrayList<>(numOuts);
         heights = new long[numOuts];
         for (int i = 0; i < numOuts; i++) {
             long version = readUint32();
@@ -135,7 +137,7 @@ public class UTXOsMessage extends Message {
 
     /** Returns the list of outputs that matched the query. */
     public List<TransactionOutput> getOutputs() {
-        return new ArrayList<TransactionOutput>(outputs);
+        return new ArrayList<>(outputs);
     }
 
     /** Returns the block heights of each output returned in getOutputs(), or MEMPOOL_HEIGHT if not confirmed yet. */

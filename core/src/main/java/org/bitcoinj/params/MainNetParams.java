@@ -40,7 +40,7 @@ public class MainNetParams extends AbstractBitcoinCoreParams {
         dumpedPrivateKeyHeader = 128;
         addressHeader = 0;
         p2shHeader = 5;
-        acceptableAddressCodes = new int[] { addressHeader, p2shHeader };
+        segwitAddressHrp = "bc";
         port = 8333;
         packetMagic = 0xf9beb4d9L;
         bip32HeaderPub = 0x0488B21E; //The 4 byte header that serializes in base58 to "xpub".
@@ -77,8 +77,10 @@ public class MainNetParams extends AbstractBitcoinCoreParams {
                 "seed.bitcoinstats.com",        // Chris Decker
                 "seed.bitnodes.io",             // Addy Yeow
                 "bitseed.xf2.org",              // Jeff Garzik
+                "bitcoin.bloqseeds.net",        // Bloq		
+	        "seed.bitcoin.jonasschnelli.ch",// Jonas Schnelli
                 "bitcoin.bloqseeds.net",        // Bloq
-                "seed.bitcoin.jonasschnelli.ch" // Jonas Schnelli
+                "seed.ob1.io",                  // OpenBazaar
         };
         httpSeeds = new HttpDiscovery.Details[] {
                 // Andreas Schildbach

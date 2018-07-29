@@ -74,7 +74,7 @@ public class AddressMessage extends Message {
         // Guard against ultra large messages that will crash us.
         if (numAddresses > MAX_ADDRESSES)
             throw new ProtocolException("Address message too large.");
-        addresses = new ArrayList<PeerAddress>((int) numAddresses);
+        addresses = new ArrayList<>((int) numAddresses);
         for (int i = 0; i < numAddresses; i++) {
             PeerAddress addr = new PeerAddress(params, payload, cursor, protocolVersion, this, serializer);
             addresses.add(addr);
@@ -124,6 +124,6 @@ public class AddressMessage extends Message {
 
     @Override
     public String toString() {
-        return "addr: " + Utils.join(addresses);
+        return "addr: " + Utils.SPACE_JOINER.join(addresses);
     }
 }

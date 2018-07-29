@@ -48,7 +48,7 @@ import static com.google.common.base.Preconditions.checkState;
  */
 public class TestWithNetworkConnections {
     public static final int PEER_SERVERS = 5;
-    protected static final NetworkParameters PARAMS = UnitTestParams.get();
+    protected static final NetworkParameters UNITTEST = UnitTestParams.get();
     protected Context context;
     protected BlockStore blockStore;
     protected BlockChain blockChain;
@@ -59,7 +59,7 @@ public class TestWithNetworkConnections {
 
     private NioServer[] peerServers = new NioServer[PEER_SERVERS];
     private final ClientConnectionManager channels;
-    protected final BlockingQueue<InboundMessageQueuer> newPeerWriteTargetQueue = new LinkedBlockingQueue<InboundMessageQueuer>();
+    protected final BlockingQueue<InboundMessageQueuer> newPeerWriteTargetQueue = new LinkedBlockingQueue<>();
 
     public enum ClientType {
         NIO_CLIENT_MANAGER,
@@ -79,20 +79,20 @@ public class TestWithNetworkConnections {
     }
 
     public void setUp() throws Exception {
-        setUp(new MemoryBlockStore(UnitTestParams.get()));
+        setUp(new MemoryBlockStore(UNITTEST));
     }
     
     public void setUp(BlockStore blockStore) throws Exception {
         BriefLogFormatter.init();
-        Context.propagate(new Context(PARAMS, 100, Coin.ZERO, false));
+        Context.propagate(new Context(UNITTEST, 100, Coin.ZERO, false));
         this.blockStore = blockStore;
         // Allow subclasses to override the wallet object with their own.
         if (wallet == null) {
-            wallet = new Wallet(PARAMS);
+            wallet = new Wallet(UNITTEST);
             key = wallet.freshReceiveKey();
-            address = key.toAddress(PARAMS);
+            address = LegacyAddress.fromKey(UNITTEST, key);
         }
-        blockChain = new BlockChain(PARAMS, wallet, blockStore);
+        blockChain = new BlockChain(UNITTEST, wallet, blockStore);
 
         startPeerServers();
         if (clientType == ClientType.NIO_CLIENT_MANAGER || clientType == ClientType.BLOCKING_CLIENT_MANAGER) {
@@ -100,7 +100,7 @@ public class TestWithNetworkConnections {
             channels.awaitRunning();
         }
 
-        socketAddress = new InetSocketAddress("127.0.0.1", 1111);
+        socketAddress = new InetSocketAddress(InetAddress.getLoopbackAddress(), 1111);
     }
 
     protected void startPeerServers() throws IOException {
@@ -114,7 +114,7 @@ public class TestWithNetworkConnections {
             @Nullable
             @Override
             public StreamConnection getNewConnection(InetAddress inetAddress, int port) {
-                return new InboundMessageQueuer(PARAMS) {
+                return new InboundMessageQueuer(UNITTEST) {
                     @Override
                     public void connectionClosed() {
                     }
@@ -125,7 +125,7 @@ public class TestWithNetworkConnections {
                     }
                 };
             }
-        }, new InetSocketAddress("127.0.0.1", 2000 + i));
+        }, new InetSocketAddress(InetAddress.getLoopbackAddress(), 2000 + i));
         peerServers[i].startAsync();
         peerServers[i].awaitRunning();
     }
@@ -158,11 +158,11 @@ public class TestWithNetworkConnections {
             }
         });
         if (clientType == ClientType.NIO_CLIENT_MANAGER || clientType == ClientType.BLOCKING_CLIENT_MANAGER)
-            channels.openConnection(new InetSocketAddress("127.0.0.1", 2000), peer);
+            channels.openConnection(new InetSocketAddress(InetAddress.getLoopbackAddress(), 2000), peer);
         else if (clientType == ClientType.NIO_CLIENT)
-            new NioClient(new InetSocketAddress("127.0.0.1", 2000), peer, 100);
+            new NioClient(new InetSocketAddress(InetAddress.getLoopbackAddress(), 2000), peer, 100);
         else if (clientType == ClientType.BLOCKING_CLIENT)
-            new BlockingClient(new InetSocketAddress("127.0.0.1", 2000), peer, 100, SocketFactory.getDefault(), null);
+            new BlockingClient(new InetSocketAddress(InetAddress.getLoopbackAddress(), 2000), peer, 100, SocketFactory.getDefault(), null);
         else
             throw new RuntimeException();
         // Claim we are connected to a different IP that what we really are, so tx confidence broadcastBy sets work

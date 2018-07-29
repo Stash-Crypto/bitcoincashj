@@ -16,8 +16,8 @@
 package org.bitcoinj.script;
 
 import org.bitcoinj.core.Coin;
-import org.bitcoinj.core.ScriptException;
 import org.bitcoinj.core.Transaction;
+import org.bitcoinj.script.ScriptException;
 
 import javax.annotation.Nullable;
 import java.util.List;

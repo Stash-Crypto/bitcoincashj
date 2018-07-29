@@ -37,7 +37,7 @@ import com.google.common.base.Objects;
  * depth-first traversal is performed, consuming bits and hashes as they were written during encoding.</p>
  *
  * <p>The serialization is fixed and provides a hard guarantee about the encoded size,
- * <tt>SIZE &lt;= 10 + ceil(32.25*N)</tt> where N represents the number of leaf nodes of the partial tree. N itself
+ * {@code SIZE <= 10 + ceil(32.25*N)} where N represents the number of leaf nodes of the partial tree. N itself
  * is bounded by:</p>
  *
  * <p>
@@ -45,14 +45,16 @@ import com.google.common.base.Objects;
  * N &lt;= 1 + matched_transactions*tree_height
  * </p>
  *
- * <p><pre>The serialization format:
+ * <p>The serialization format:</p>
+ * <pre>
  *  - uint32     total_transactions (4 bytes)
  *  - varint     number of hashes   (1-3 bytes)
  *  - uint256[]  hashes in depth-first order (&lt;= 32*N bytes)
  *  - varint     number of bytes of flag bits (1-3 bytes)
  *  - byte[]     flag bits, packed per 8 in a byte, least significant bit first (&lt;= 2*N-1 bits)
- * The size constraints follow from this.</pre></p>
- * 
+ * </pre>
+ * <p>The size constraints follow from this.</p>
+ *
  * <p>Instances of this class are not safe for use by multiple threads.</p>
  */
 public class PartialMerkleTree extends Message {
@@ -89,8 +91,8 @@ public class PartialMerkleTree extends Message {
         int height = 0;
         while (getTreeWidth(allLeafHashes.size(), height) > 1)
             height++;
-        List<Boolean> bitList = new ArrayList<Boolean>();
-        List<Sha256Hash> hashes = new ArrayList<Sha256Hash>();
+        List<Boolean> bitList = new ArrayList<>();
+        List<Sha256Hash> hashes = new ArrayList<>();
         traverseAndBuild(height, 0, allLeafHashes, includeBits, bitList, hashes);
         byte[] bits = new byte[(int)Math.ceil(bitList.size() / 8.0)];
         for (int i = 0; i < bitList.size(); i++)
@@ -116,7 +118,7 @@ public class PartialMerkleTree extends Message {
         transactionCount = (int)readUint32();
 
         int nHashes = (int) readVarInt();
-        hashes = new ArrayList<Sha256Hash>(nHashes);
+        hashes = new ArrayList<>(Math.min(nHashes, Utils.MAX_INITIAL_ARRAY_LENGTH));
         for (int i = 0; i < nHashes; i++)
             hashes.add(readHash());
 

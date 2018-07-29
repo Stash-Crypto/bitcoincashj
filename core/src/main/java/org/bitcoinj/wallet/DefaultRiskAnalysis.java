@@ -122,7 +122,7 @@ public class DefaultRiskAnalysis implements RiskAnalysis {
 
     /**
      * The reason a transaction is considered non-standard, returned by
-     * {@link #isStandard(org.bitcoinj.core.Transaction)}.
+     * {@link #isStandard(Transaction)}.
      */
     public enum RuleViolation {
         NONE,
@@ -192,7 +192,7 @@ public class DefaultRiskAnalysis implements RiskAnalysis {
                 ECDSASignature signature;
                 try {
                     signature = ECKey.ECDSASignature.decodeFromDER(chunk.data);
-                } catch (RuntimeException x) {
+                } catch (IllegalArgumentException x) {
                     // Doesn't look like a signature.
                     signature = null;
                 }

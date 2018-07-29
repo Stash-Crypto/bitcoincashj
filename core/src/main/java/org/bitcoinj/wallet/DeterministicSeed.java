@@ -20,12 +20,13 @@ package org.bitcoinj.wallet;
 import org.bitcoinj.core.Utils;
 import org.bitcoinj.crypto.*;
 
-import com.google.common.base.Charsets;
 import com.google.common.base.Objects;
 import com.google.common.base.Splitter;
 import org.spongycastle.crypto.params.KeyParameter;
 
 import javax.annotation.Nullable;
+
+import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.util.List;
 
@@ -70,7 +71,7 @@ public class DeterministicSeed implements EncryptableItem {
     }
 
     /**
-     * Constructs a seed from a BIP 39 mnemonic code. See {@link org.bitcoinj.crypto.MnemonicCode} for more
+     * Constructs a seed from a BIP 39 mnemonic code. See {@link MnemonicCode} for more
      * details on this scheme.
      * @param mnemonicCode A list of words.
      * @param seed The derived seed, or pass null to derive it from mnemonicCode (slow)
@@ -82,7 +83,7 @@ public class DeterministicSeed implements EncryptableItem {
     }
 
     /**
-     * Constructs a seed from a BIP 39 mnemonic code. See {@link org.bitcoinj.crypto.MnemonicCode} for more
+     * Constructs a seed from a BIP 39 mnemonic code. See {@link MnemonicCode} for more
      * details on this scheme.
      * @param random Entropy source
      * @param bits number of bits, must be divisible by 32
@@ -94,7 +95,7 @@ public class DeterministicSeed implements EncryptableItem {
     }
 
     /**
-     * Constructs a seed from a BIP 39 mnemonic code. See {@link org.bitcoinj.crypto.MnemonicCode} for more
+     * Constructs a seed from a BIP 39 mnemonic code. See {@link MnemonicCode} for more
      * details on this scheme.
      * @param entropy entropy bits, length must be divisible by 32
      * @param passphrase A user supplied passphrase, or an empty string if there is no passphrase
@@ -134,7 +135,7 @@ public class DeterministicSeed implements EncryptableItem {
     public String toString() {
         return isEncrypted()
             ? "DeterministicSeed [encrypted]"
-            : "DeterministicSeed " + toHexString() + " " + Utils.join(mnemonicCode);
+            : "DeterministicSeed " + toHexString() + " " + Utils.SPACE_JOINER.join(mnemonicCode);
     }
 
     /** Returns the seed as hex or null if encrypted. */
@@ -188,7 +189,7 @@ public class DeterministicSeed implements EncryptableItem {
     }
 
     private byte[] getMnemonicAsBytes() {
-        return Utils.join(mnemonicCode).getBytes(Charsets.UTF_8);
+        return Utils.SPACE_JOINER.join(mnemonicCode).getBytes(StandardCharsets.UTF_8);
     }
 
     public DeterministicSeed decrypt(KeyCrypter crypter, String passphrase, KeyParameter aesKey) {
@@ -236,7 +237,7 @@ public class DeterministicSeed implements EncryptableItem {
     }
 
     private static List<String> decodeMnemonicCode(byte[] mnemonicCode) {
-        return decodeMnemonicCode(Utils.toString(mnemonicCode, "UTF-8"));
+        return decodeMnemonicCode(new String(mnemonicCode, StandardCharsets.UTF_8));
     }
 
     private static List<String> decodeMnemonicCode(String mnemonicCode) {

@@ -16,13 +16,11 @@
 
 package org.bitcoinj.crypto;
 
-import org.bitcoinj.wallet.Protos;
-
 import javax.annotation.Nullable;
 
 /**
  * Provides a uniform way to access something that can be optionally encrypted with a
- * {@link org.bitcoinj.crypto.KeyCrypter}, yielding an {@link org.bitcoinj.crypto.EncryptedData}, and
+ * {@link KeyCrypter}, yielding an {@link EncryptedData}, and
  * which can have a creation time associated with it.
  */
 public interface EncryptableItem {
@@ -38,7 +36,7 @@ public interface EncryptableItem {
     EncryptedData getEncryptedData();
 
     /** Returns an enum constant describing what algorithm was used to encrypt the key or UNENCRYPTED. */
-    Protos.Wallet.EncryptionType getEncryptionType();
+    // Protos.Wallet.EncryptionType getEncryptionType();
 
     /** Returns the time in seconds since the UNIX epoch at which this encryptable item was first created/derived. */
     long getCreationTimeSeconds();

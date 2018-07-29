@@ -1,4 +1,6 @@
 /*
+ * Copyright by the original author or authors.
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -18,6 +20,7 @@ import com.google.common.collect.ImmutableList;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptBuilder;
+import org.bitcoinj.script.ScriptPattern;
 import org.bitcoinj.testing.TestWithWallet;
 import org.bitcoinj.wallet.SendRequest;
 import org.hamcrest.CoreMatchers;
@@ -49,7 +52,7 @@ public class TransactionOutputTest extends TestWithWallet {
         ECKey otherKey = new ECKey();
 
         // Create multi-sig transaction
-        Transaction multiSigTransaction = new Transaction(PARAMS);
+        Transaction multiSigTransaction = new Transaction(UNITTEST);
         ImmutableList<ECKey> keys = ImmutableList.of(myKey, otherKey);
 
         Script scriptPubKey = ScriptBuilder.createMultiSigOutputScript(2, keys);
@@ -65,24 +68,25 @@ public class TransactionOutputTest extends TestWithWallet {
     @Test
     public void testP2SHOutputScript() throws Exception {
         String P2SHAddressString = "35b9vsyH1KoFT5a5KtrKusaCcPLkiSo1tU";
-        Address P2SHAddress = Address.fromBase58(MainNetParams.get(), P2SHAddressString);
+        Address P2SHAddress = LegacyAddress.fromBase58(MAINNET, P2SHAddressString);
         Script script = ScriptBuilder.createOutputScript(P2SHAddress);
-        Transaction tx = new Transaction(MainNetParams.get());
+        Transaction tx = new Transaction(MAINNET);
         tx.addOutput(Coin.COIN, script);
-        assertEquals(P2SHAddressString, tx.getOutput(0).getAddressFromP2SH(MainNetParams.get()).toString());
+        assertEquals(P2SHAddressString, tx.getOutput(0).getScriptPubKey().getToAddress(MAINNET).toString());
     }
 
     @Test
     public void getAddressTests() throws Exception {
-        Transaction tx = new Transaction(MainNetParams.get());
+        Transaction tx = new Transaction(MAINNET);
         tx.addOutput(Coin.CENT, ScriptBuilder.createOpReturnScript("hello world!".getBytes()));
-        assertNull(tx.getOutput(0).getAddressFromP2SH(PARAMS));
-        assertNull(tx.getOutput(0).getAddressFromP2PKHScript(PARAMS));
+        assertTrue(ScriptPattern.isOpReturn(tx.getOutput(0).getScriptPubKey()));
+        assertFalse(ScriptPattern.isPayToPubKey(tx.getOutput(0).getScriptPubKey()));
+        assertFalse(ScriptPattern.isPayToPubKeyHash(tx.getOutput(0).getScriptPubKey()));
     }
 
     @Test
     public void getMinNonDustValue() throws Exception {
-        TransactionOutput payToAddressOutput = new TransactionOutput(PARAMS, null, Coin.COIN, myAddress);
+        TransactionOutput payToAddressOutput = new TransactionOutput(UNITTEST, null, Coin.COIN, myAddress);
         assertEquals(Transaction.MIN_NONDUST_OUTPUT, payToAddressOutput.getMinNonDustValue());
     }
 }

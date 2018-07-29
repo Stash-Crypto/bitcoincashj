@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -50,7 +51,7 @@ public class BitcoinSerializer extends MessageSerializer {
     private final NetworkParameters params;
     private final boolean parseRetain;
 
-    private static final Map<Class<? extends Message>, String> names = new HashMap<Class<? extends Message>, String>();
+    private static final Map<Class<? extends Message>, String> names = new HashMap<>();
 
     static {
         names.put(VersionMessage.class, "version");
@@ -73,6 +74,7 @@ public class BitcoinSerializer extends MessageSerializer {
         names.put(RejectMessage.class, "reject");
         names.put(GetUTXOsMessage.class, "getutxos");
         names.put(UTXOsMessage.class, "utxos");
+        names.put(SendHeadersMessage.class, "sendheaders");
     }
 
     /**
@@ -231,9 +233,9 @@ public class BitcoinSerializer extends MessageSerializer {
             return new UTXOsMessage(params, payloadBytes);
         } else if (command.equals("getutxos")) {
             return new GetUTXOsMessage(params, payloadBytes);
-        } else if (getParameters().getUseForkId() && command.equals("sendheaders")) {
-            return new SendHeadersMessage(params);
-        } else if (getParameters().getUseForkId() && command.equals("feefilter")) {
+        } else if (command.equals("sendheaders")) {
+            return new SendHeadersMessage(params, payloadBytes);
+        } else if (command.equals("feefilter")) {
             return new FeeFilterMessage(params);
         } else {
             log.warn("No support for deserializing message with name {}", command);
@@ -367,7 +369,7 @@ public class BitcoinSerializer extends MessageSerializer {
             for (; header[cursor] != 0 && cursor < COMMAND_LEN; cursor++) ;
             byte[] commandBytes = new byte[cursor];
             System.arraycopy(header, 0, commandBytes, 0, cursor);
-            command = Utils.toString(commandBytes, "US-ASCII");
+            command = new String(commandBytes, StandardCharsets.US_ASCII);
             cursor = COMMAND_LEN;
 
             size = (int) readUint32(header, cursor);

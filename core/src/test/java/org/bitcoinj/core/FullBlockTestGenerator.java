@@ -1,4 +1,6 @@
 /*
+ * Copyright by the original author or authors.
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -20,6 +22,9 @@ import org.bitcoinj.core.Transaction.SigHash;
 import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptBuilder;
+import org.bitcoinj.script.ScriptException;
+import org.bitcoinj.script.ScriptPattern;
+
 import com.google.common.base.Preconditions;
 
 import javax.annotation.Nullable;
@@ -43,7 +48,7 @@ import static com.google.common.base.Preconditions.checkState;
  *    Bitcoin Core consensus rules a shared library and use that. Seriously, you wont get it right, and starting with
  *    this tester as a way to try to do so will simply end in pain and lost coins. SERIOUSLY, JUST STOP!
  *
- * b) Bitcoin Core is faling some test in here and you're wondering what test is causing failure. Just stop. There is no
+ * b) Bitcoin Core is failing some test in here and you're wondering what test is causing failure. Just stop. There is no
  *    hope trying to read this file and decipher it. Give up and ping BlueMatt. Seriously, this stuff is a huge mess.
  *
  * c) You are trying to add a new test. STOP! WHY THE HELL WOULD YOU EVEN DO THAT? GO REWRITE THIS TESTER!
@@ -145,10 +150,10 @@ public class FullBlockTestGenerator {
     private byte[] coinbaseOutKeyPubKey;
 
     // Used to double-check that we are always using the right next-height
-    private Map<Sha256Hash, Integer> blockToHeightMap = new HashMap<Sha256Hash, Integer>();
+    private Map<Sha256Hash, Integer> blockToHeightMap = new HashMap<>();
 
-    private Map<Sha256Hash, Block> hashHeaderMap = new HashMap<Sha256Hash, Block>();
-    private Map<Sha256Hash, Sha256Hash> coinbaseBlockMap = new HashMap<Sha256Hash, Sha256Hash>();
+    private Map<Sha256Hash, Block> hashHeaderMap = new HashMap<>();
+    private Map<Sha256Hash, Sha256Hash> coinbaseBlockMap = new HashMap<>();
 
     public FullBlockTestGenerator(NetworkParameters params) {
         this.params = params;
@@ -173,10 +178,7 @@ public class FullBlockTestGenerator {
             public boolean add(Rule element) {
                 if (outStream != null && element instanceof BlockAndValidity) {
                     try {
-                        outStream.write((int) (params.getPacketMagic() >>> 24));
-                        outStream.write((int) (params.getPacketMagic() >>> 16));
-                        outStream.write((int) (params.getPacketMagic() >>> 8));
-                        outStream.write((int) params.getPacketMagic());
+                        Utils.uint32ToByteStreamBE(params.getPacketMagic(), outStream);
                         byte[] block = ((BlockAndValidity)element).block.bitcoinSerialize();
                         byte[] length = new byte[4];
                         Utils.uint32ToByteArrayBE(block.length, length, 0);
@@ -192,7 +194,7 @@ public class FullBlockTestGenerator {
         };
         RuleList ret = new RuleList(blocks, hashHeaderMap, 10);
 
-        Queue<TransactionOutPointWithValue> spendableOutputs = new LinkedList<TransactionOutPointWithValue>();
+        Queue<TransactionOutPointWithValue> spendableOutputs = new LinkedList<>();
 
         int chainHeadHeight = 1;
         Block chainHead = params.getGenesisBlock().createNextBlockWithCoinbase(Block.BLOCK_VERSION_GENESIS, coinbaseOutKeyPubKey, chainHeadHeight);
@@ -966,7 +968,7 @@ public class FullBlockTestGenerator {
         // A block with no txn
         Block b46 = new Block(params, Block.BLOCK_VERSION_GENESIS);
         {
-            b46.transactions = new ArrayList<Transaction>();
+            b46.transactions = new ArrayList<>();
             b46.setDifficultyTarget(b44.getDifficultyTarget());
             b46.setMerkleRoot(Sha256Hash.ZERO_HASH);
 
@@ -1518,7 +1520,7 @@ public class FullBlockTestGenerator {
         blocks.add(new BlockAndValidity(b82, true, false, b82.getHash(), chainHeadHeight + 28, "b82"));
         spendableOutputs.offer(b82.getCoinbaseOutput());
 
-        HashSet<InventoryItem> post82Mempool = new HashSet<InventoryItem>();
+        HashSet<InventoryItem> post82Mempool = new HashSet<>();
         post82Mempool.add(new InventoryItem(InventoryItem.Type.Transaction, b78tx.getHash()));
         post82Mempool.add(new InventoryItem(InventoryItem.Type.Transaction, b79tx.getHash()));
         blocks.add(new MemoryPoolState(post82Mempool, "post-b82 tx resurrection"));
@@ -1701,7 +1703,7 @@ public class FullBlockTestGenerator {
             int blockCountAfter1001;
             int nextHeight = heightAfter1001;
 
-            List<Sha256Hash> hashesToSpend = new LinkedList<Sha256Hash>(); // all index 0
+            List<Sha256Hash> hashesToSpend = new LinkedList<>(); // all index 0
             final int TRANSACTION_CREATION_BLOCKS = 100;
             for (blockCountAfter1001 = 0; blockCountAfter1001 < TRANSACTION_CREATION_BLOCKS; blockCountAfter1001++) {
                 NewBlock block = createNextBlock(lastBlock, nextHeight++, null, null);
@@ -1827,7 +1829,7 @@ public class FullBlockTestGenerator {
             input.setScriptSig(new ScriptBuilder().op(OP_1).build());
         } else {
             // Sign input
-            checkState(prevOut.scriptPubKey.isSentToRawPubKey());
+            checkState(ScriptPattern.isPayToPubKey(prevOut.scriptPubKey));
             Sha256Hash hash = t.hashForSignature(0, prevOut.scriptPubKey, SigHash.ALL, false);
             input.setScriptSig(ScriptBuilder.createInputScript(
                             new TransactionSignature(coinbaseOutKey.sign(hash), SigHash.ALL, false))

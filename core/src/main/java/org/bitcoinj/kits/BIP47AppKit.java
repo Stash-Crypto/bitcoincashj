@@ -52,8 +52,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
-import static org.bitcoinj.core.Utils.join;
-
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**

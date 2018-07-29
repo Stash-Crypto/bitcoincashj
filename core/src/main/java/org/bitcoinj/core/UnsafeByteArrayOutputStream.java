@@ -21,12 +21,12 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 /**
- * An unsynchronized implementation of ByteArrayOutputStream that will return the backing byte array if its length == size().
+ * <p>An unsynchronized implementation of ByteArrayOutputStream that will return the backing byte array if its length == size().
  * This avoids unneeded array copy where the BOS is simply being used to extract a byte array of known length from a
- * 'serialized to stream' method.
- * <p/>
- * Unless the final length can be accurately predicted the only performance this will yield is due to unsynchronized
- * methods.
+ * 'serialized to stream' method.</p>
+ *
+ * <p>Unless the final length can be accurately predicted the only performance this will yield is due to unsynchronized
+ * methods.</p>
  *
  * @author git
  */
@@ -49,7 +49,7 @@ public class UnsafeByteArrayOutputStream extends ByteArrayOutputStream {
     public void write(int b) {
         int newcount = count + 1;
         if (newcount > buf.length) {
-            buf = Utils.copyOf(buf, Math.max(buf.length << 1, newcount));
+            buf = copyOf(buf, Math.max(buf.length << 1, newcount));
         }
         buf[count] = (byte) b;
         count = newcount;
@@ -73,7 +73,7 @@ public class UnsafeByteArrayOutputStream extends ByteArrayOutputStream {
         }
         int newcount = count + len;
         if (newcount > buf.length) {
-            buf = Utils.copyOf(buf, Math.max(buf.length << 1, newcount));
+            buf = copyOf(buf, Math.max(buf.length << 1, newcount));
         }
         System.arraycopy(b, off, buf, count, len);
         count = newcount;
@@ -115,7 +115,7 @@ public class UnsafeByteArrayOutputStream extends ByteArrayOutputStream {
      */
     @Override
     public byte toByteArray()[] {
-        return count == buf.length ? buf : Utils.copyOf(buf, count);
+        return count == buf.length ? buf : copyOf(buf, count);
     }
 
     /**
@@ -130,4 +130,9 @@ public class UnsafeByteArrayOutputStream extends ByteArrayOutputStream {
         return count;
     }
 
+    private static byte[] copyOf(byte[] in, int length) {
+        byte[] out = new byte[length];
+        System.arraycopy(in, 0, out, 0, Math.min(length, in.length));
+        return out;
+    }
 }

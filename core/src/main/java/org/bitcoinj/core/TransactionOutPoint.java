@@ -44,7 +44,7 @@ public class TransactionOutPoint extends ChildMessage {
     Transaction fromTx;
 
     // The connected output.
-    private TransactionOutput connectedOutput;
+    TransactionOutput connectedOutput;
 
     public TransactionOutPoint(NetworkParameters params, long index, @Nullable Transaction fromTx) {
         super(params);
@@ -129,8 +129,8 @@ public class TransactionOutPoint extends ChildMessage {
     }
 
     /**
-     * Returns the ECKey identified in the connected output, for either pay-to-address scripts or pay-to-key scripts.
-     * For P2SH scripts you can use {@link #getConnectedRedeemData(org.bitcoinj.wallet.KeyBag)} and then get the
+     * Returns the ECKey identified in the connected output, for either P2PKH scripts or P2PK scripts.
+     * For P2SH scripts you can use {@link #getConnectedRedeemData(KeyBag)} and then get the
      * key from RedeemData.
      * If the script form cannot be understood, throws ScriptException.
      *
@@ -141,19 +141,19 @@ public class TransactionOutPoint extends ChildMessage {
         TransactionOutput connectedOutput = getConnectedOutput();
         checkNotNull(connectedOutput, "Input is not connected so cannot retrieve key");
         Script connectedScript = connectedOutput.getScriptPubKey();
-        if (connectedScript.isSentToAddress()) {
-            byte[] addressBytes = connectedScript.getPubKeyHash();
+        if (ScriptPattern.isPayToPubKeyHash(connectedScript)) {
+            byte[] addressBytes = ScriptPattern.extractHashFromPayToPubKeyHash(connectedScript);
             return keyBag.findKeyFromPubHash(addressBytes);
-        } else if (connectedScript.isSentToRawPubKey()) {
-            byte[] pubkeyBytes = connectedScript.getPubKey();
+        } else if (ScriptPattern.isPayToPubKey(connectedScript)) {
+            byte[] pubkeyBytes = ScriptPattern.extractKeyFromPayToPubKey(connectedScript);
             return keyBag.findKeyFromPubKey(pubkeyBytes);
         } else {
-            throw new ScriptException("Could not understand form of connected output script: " + connectedScript);
+            throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "Could not understand form of connected output script: " + connectedScript);
         }
     }
 
     /**
-     * Returns the RedeemData identified in the connected output, for either pay-to-address scripts, pay-to-key
+     * Returns the RedeemData identified in the connected output, for either P2PKH scripts, P2PK
      * or P2SH scripts.
      * If the script forms cannot be understood, throws ScriptException.
      *
@@ -164,17 +164,17 @@ public class TransactionOutPoint extends ChildMessage {
         TransactionOutput connectedOutput = getConnectedOutput();
         checkNotNull(connectedOutput, "Input is not connected so cannot retrieve key");
         Script connectedScript = connectedOutput.getScriptPubKey();
-        if (connectedScript.isSentToAddress()) {
-            byte[] addressBytes = connectedScript.getPubKeyHash();
+        if (ScriptPattern.isPayToPubKeyHash(connectedScript)) {
+            byte[] addressBytes = ScriptPattern.extractHashFromPayToPubKeyHash(connectedScript);
             return RedeemData.of(keyBag.findKeyFromPubHash(addressBytes), connectedScript);
-        } else if (connectedScript.isSentToRawPubKey()) {
-            byte[] pubkeyBytes = connectedScript.getPubKey();
+        } else if (ScriptPattern.isPayToPubKey(connectedScript)) {
+            byte[] pubkeyBytes = ScriptPattern.extractKeyFromPayToPubKey(connectedScript);
             return RedeemData.of(keyBag.findKeyFromPubKey(pubkeyBytes), connectedScript);
-        } else if (connectedScript.isPayToScriptHash()) {
-            byte[] scriptHash = connectedScript.getPubKeyHash();
+        } else if (ScriptPattern.isPayToScriptHash(connectedScript)) {
+            byte[] scriptHash = ScriptPattern.extractHashFromPayToScriptHash(connectedScript);
             return keyBag.findRedeemDataFromScriptHash(scriptHash);
         } else {
-            throw new ScriptException("Could not understand form of connected output script: " + connectedScript);
+            throw new ScriptException(ScriptError.SCRIPT_ERR_UNKNOWN_ERROR, "Could not understand form of connected output script: " + connectedScript);
         }
     }
 

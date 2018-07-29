@@ -16,6 +16,7 @@
 
 package org.bitcoinj.store;
 
+import org.bitcoinj.core.Address;
 import org.bitcoinj.core.NetworkParameters;
 
 import java.util.ArrayList;
@@ -24,7 +25,7 @@ import java.util.List;
 
 /**
  * <p>A full pruned block store using the MySQL database engine. As an added bonus an address index is calculated,
- * so you can use {@link #calculateBalanceForAddress(org.bitcoinj.core.Address)} to quickly look up
+ * so you can use {@link #calculateBalanceForAddress(Address)} to quickly look up
  * the quantity of bitcoins controlled by that address.</p>
  */
 public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
@@ -119,13 +120,13 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
     }
 
     @Override
-    protected String getTrasactionOutputSelectSQL() {
+    protected String getTransactionOutputSelectSQL() {
         return SELECT_TRANSACTION_OUTPUTS_SQL;
     }
 
     @Override
     protected List<String> getCreateTablesSQL() {
-        List<String> sqlStatements = new ArrayList<String>();
+        List<String> sqlStatements = new ArrayList<>();
         sqlStatements.add(CREATE_SETTINGS_TABLE);
         sqlStatements.add(CREATE_HEADERS_TABLE);
         sqlStatements.add(CREATE_UNDOABLE_TABLE);
@@ -135,7 +136,7 @@ public class MySQLFullPrunedBlockStore extends DatabaseFullPrunedBlockStore {
 
     @Override
     protected List<String> getCreateIndexesSQL() {
-        List<String> sqlStatements = new ArrayList<String>();
+        List<String> sqlStatements = new ArrayList<>();
         sqlStatements.add(CREATE_UNDOABLE_TABLE_INDEX);
         sqlStatements.add(CREATE_OUTPUTS_ADDRESS_MULTI_INDEX);
         sqlStatements.add(CREATE_OUTPUTS_ADDRESSTARGETABLE_INDEX);

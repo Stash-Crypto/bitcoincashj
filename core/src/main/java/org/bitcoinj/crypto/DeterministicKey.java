@@ -130,7 +130,7 @@ public class DeterministicKey extends ECKey {
      * information about its parent key.  Invoked when deserializing, but otherwise not something that
      * you normally should use.
      */
-    private DeterministicKey(ImmutableList<ChildNumber> childNumberPath,
+    public DeterministicKey(ImmutableList<ChildNumber> childNumberPath,
                             byte[] chainCode,
                             LazyECPoint publicAsPoint,
                             @Nullable DeterministicKey parent,
@@ -150,7 +150,7 @@ public class DeterministicKey extends ECKey {
      * information about its parent key.  Invoked when deserializing, but otherwise not something that
      * you normally should use.
      */
-    private DeterministicKey(ImmutableList<ChildNumber> childNumberPath,
+    public DeterministicKey(ImmutableList<ChildNumber> childNumberPath,
                             byte[] chainCode,
                             BigInteger priv,
                             @Nullable DeterministicKey parent,
@@ -338,7 +338,7 @@ public class DeterministicKey extends ECKey {
     }
 
     /**
-     * Returns this keys {@link org.bitcoinj.crypto.KeyCrypter} <b>or</b> the keycrypter of its parent key.
+     * Returns this keys {@link KeyCrypter} <b>or</b> the keycrypter of its parent key.
      */
     @Override @Nullable
     public KeyCrypter getKeyCrypter() {
@@ -559,7 +559,7 @@ public class DeterministicKey extends ECKey {
 
     /**
      * The creation time of a deterministic key is equal to that of its parent, unless this key is the root of a tree
-     * in which case the time is stored alongside the key as per normal, see {@link org.bitcoinj.core.ECKey#getCreationTimeSeconds()}.
+     * in which case the time is stored alongside the key as per normal, see {@link ECKey#getCreationTimeSeconds()}.
      */
     @Override
     public long getCreationTimeSeconds() {
@@ -614,13 +614,14 @@ public class DeterministicKey extends ECKey {
     }
 
     @Override
-    public void formatKeyWithAddress(boolean includePrivateKeys, StringBuilder builder, NetworkParameters params) {
-        final Address address = toAddress(params);
+    public void formatKeyWithAddress(boolean includePrivateKeys, @Nullable KeyParameter aesKey, StringBuilder builder,
+            NetworkParameters params) {
+        final Address address = LegacyAddress.fromKey(params, this);
         builder.append("  addr:").append(address);
         builder.append("  hash160:").append(Utils.HEX.encode(getPubKeyHash()));
         builder.append("  (").append(getPathAsString()).append(")\n");
         if (includePrivateKeys) {
-            builder.append("  ").append(toStringWithPrivate(params)).append("\n");
+            builder.append("  ").append(toStringWithPrivate(aesKey, params)).append("\n");
         }
     }
 }

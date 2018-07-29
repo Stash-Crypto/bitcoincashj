@@ -17,7 +17,15 @@
 
 package org.bitcoinj.examples;
 
-import org.bitcoinj.core.*;
+import org.bitcoinj.core.Address;
+import org.bitcoinj.core.Base58;
+import org.bitcoinj.core.BlockChain;
+import org.bitcoinj.core.DumpedPrivateKey;
+import org.bitcoinj.core.ECKey;
+import org.bitcoinj.core.LegacyAddress;
+import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.core.PeerAddress;
+import org.bitcoinj.core.PeerGroup;
 import org.bitcoinj.params.MainNetParams;
 import org.bitcoinj.store.MemoryBlockStore;
 import org.bitcoinj.wallet.Wallet;
@@ -50,9 +58,9 @@ public class PrivateKeys {
                 BigInteger privKey = Base58.decodeToBigInteger(args[0]);
                 key = ECKey.fromPrivate(privKey);
             }
-            System.out.println("Address from private key is: " + key.toAddress(params).toString());
+            System.out.println("Address from private key is: " + LegacyAddress.fromKey(params, key).toString());
             // And the address ...
-            Address destination = Address.fromBase58(params, args[1]);
+            Address destination = LegacyAddress.fromBase58(params, args[1]);
 
             // Import the private key to a fresh wallet.
             Wallet wallet = new Wallet(params);
@@ -63,7 +71,7 @@ public class PrivateKeys {
             BlockChain chain = new BlockChain(params, wallet, blockStore);
 
             final PeerGroup peerGroup = new PeerGroup(params, chain);
-            peerGroup.addAddress(new PeerAddress(InetAddress.getLocalHost()));
+            peerGroup.addAddress(new PeerAddress(params, InetAddress.getLocalHost()));
             peerGroup.startAsync();
             peerGroup.downloadBlockChain();
             peerGroup.stopAsync();

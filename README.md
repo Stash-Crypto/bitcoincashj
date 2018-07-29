@@ -11,48 +11,34 @@ Release notes are [here](docs/Releases.md).
 ### Technologies
 
 * Java 7 for the core modules, Java 8 for everything else
-* [Maven 3+](http://maven.apache.org) - for building the project
+* [Gradle 3.4+](https://gradle.org/) - for building the project
 * [Google Protocol Buffers](https://github.com/google/protobuf) - for use with serialization and hardware communications
 
 ### Getting started
 
-To get started, it is best to have the latest JDK and Maven installed. The HEAD of the `master` branch contains the latest development code and various production releases are provided on feature branches.
+To get started, it is best to have the latest JDK and Gradle installed. The HEAD of the `master` branch contains the latest development code and various production releases are provided on feature branches.
 
 #### Building from the command line
 
 To perform a full build use
 ```
-mvn clean package
+gradle clean build
 ```
 You can also run
 ```
-mvn site:site
+gradle javadoc
 ```
-to generate a website with useful information like JavaDocs.
+to generate the JavaDocs.
 
-The outputs are under the `target` directory.
+The outputs are under the `build` directory.
 
 #### Building from an IDE
 
-Alternatively, just import the project using your IDE. [IntelliJ](http://www.jetbrains.com/idea/download/) has Maven integration built-in and has a free Community Edition. Simply use `File | Import Project` and locate the `pom.xml` in the root of the cloned project source tree.
+Alternatively, just import the project using your IDE. [IntelliJ](http://www.jetbrains.com/idea/download/) has Gradle integration built-in and has a free Community Edition. Simply use `File | New | Project from Existing Sources` and locate the `build.gradle` in the root of the cloned project source tree.
 
 ### Example applications
 
 These are found in the `examples` module.
-
-#### Forwarding service
-
-This will download the block chain and eventually print a Bitcoin address that it has generated.
-
-If you send coins to that address, it will forward them on to the address you specified.
-
-```
-  cd examples
-  mvn exec:java -Dexec.mainClass=org.bitcoinj.examples.ForwardingService -Dexec.args="<insert a bitcoin address here>"
-```
-
-Note that this example app *does not use checkpointing*, so the initial chain sync will be pretty slow. You can make an app that starts up and does the initial sync much faster by including a checkpoints file; see the documentation for
-more info on this technique.
 
 ### Where next?
 

@@ -22,13 +22,12 @@ public class CopayAddress {
                 throw new AddressFormatException("Wrong version");
             }
 
-            Address cAddress = new Address(mAddress.getParameters(), version, mAddress.getHash160());
-            return cAddress.toBase58();
+            return Base58.encodeChecked(version, mAddress.getHash());
         }
     }
 
-    public static Address decode(NetworkParameters networkParameters, String address) {
-        Address addr = Address.fromBase58(networkParameters, address);
+    /*public static Address decode(NetworkParameters networkParameters, String address) {
+        Address addr = Address.fromString(networkParameters, address);
         if (networkParameters.getId().equals(NetworkParameters.ID_TESTNET)) {
             return addr;
         } else {
@@ -41,7 +40,15 @@ public class CopayAddress {
                 throw new AddressFormatException("Wrong version");
             }
 
-            return new Address(networkParameters, version, addr.getHash160());
+            if (version == params.getAddressHeader())
+                return new LegacyAddress(params, false, bytes);
+            else if (version == params.getP2SHHeader())
+                return new LegacyAddress(params, true, bytes);
+            throw new AddressFormatException.WrongNetwork(version);
+
+            byte[] bytes = Base58.decodeChecked(address);
+            return new LegacyAddress(networkParameters, bytes);
+            //return new Address(networkParameters, version, addr.getHash());
         }
-    }
+    }*/
 }

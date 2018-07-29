@@ -1,6 +1,6 @@
 /*
- * Copyright 2013 The bitcoinj developers.
- *
+ * Copyright by the original author or authors.
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -28,6 +28,7 @@ import org.bitcoinj.crypto.DeterministicKey;
 import org.bitcoinj.crypto.KeyCrypter;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptBuilder;
+import org.spongycastle.crypto.params.KeyParameter;
 
 import java.security.SecureRandom;
 import java.util.LinkedHashMap;
@@ -57,7 +58,7 @@ import static com.google.common.collect.Lists.newArrayList;
 public class MarriedKeyChain extends DeterministicKeyChain {
     // The map holds P2SH redeem script and corresponding ECKeys issued by this KeyChainGroup (including lookahead)
     // mapped to redeem script hashes.
-    private LinkedHashMap<ByteString, RedeemData> marriedKeysRedeemData = new LinkedHashMap<ByteString, RedeemData>();
+    private LinkedHashMap<ByteString, RedeemData> marriedKeysRedeemData = new LinkedHashMap<>();
 
     private List<DeterministicKeyChain> followingKeyChains;
 
@@ -80,7 +81,7 @@ public class MarriedKeyChain extends DeterministicKeyChain {
         }
 
         /**
-         * Threshold, or {@code (followingKeys.size() + 1) / 2 + 1)} (majority) if unspecified.</p>
+         * <p>Threshold, or {@code (followingKeys.size() + 1) / 2 + 1)} (majority) if unspecified.</p>
          * <p>IMPORTANT: As of Bitcoin Core 0.9 all multisig transactions which require more than 3 public keys are non-standard
          * and such spends won't be processed by peers with default settings, essentially making such transactions almost
          * nonspendable</p>
@@ -234,7 +235,8 @@ public class MarriedKeyChain extends DeterministicKeyChain {
     }
 
     @Override
-    protected void formatAddresses(boolean includePrivateKeys, NetworkParameters params, StringBuilder builder2) {
+    protected void formatAddresses(boolean includePrivateKeys, @Nullable KeyParameter aesKey, NetworkParameters params,
+            StringBuilder builder2) {
         for (DeterministicKeyChain followingChain : followingKeyChains)
             builder2.append("Following chain:  ").append(followingChain.getWatchingKey().serializePubB58(params))
                     .append('\n');
